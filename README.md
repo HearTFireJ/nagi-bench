@@ -53,7 +53,7 @@ NAGI STUDIO 的 LLM 测评案例集：同一段提示词，不同「模型 × Ha
 | DeepSeek V4 Flash | DeepSeek | Claude Code · Max<br>Reasonix · Max | 02 |
 | DeepSeek V4 Flash 0731 | DeepSeek | Claude Code · Max<br>OMP · Default | 05（仅展示 01） |
 | Gemini 3.5 Flash | Google | AntiGravity · High<br>Cursor · Default<br>Google AI Studio · High | 06 |
-| Grok 4.7 | xAI | Grok Build TUI · High | 03 |
+| Grok 4.7 | xAI | Grok Build TUI · High | 06 |
 | Grok 4.6 | xAI | Grok Build TUI · High | 06 |
 | Grok 4.5 | xAI | Grok Build TUI · High | 03 |
 | Grok Build | xAI | Grok Build TUI · Max | 02 |
