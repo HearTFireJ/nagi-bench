@@ -19,6 +19,13 @@
         "en": "One-shot by claude-fable-5-1 (high) in Claude Code, unmodified, 29 minutes 44 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. To keep the blind arena anonymous, the self-identifying brand \"Fable / Calibre F51\" on the dial and title was replaced with \"Atelier / Calibre A51\" (2 text strings); no other code was changed."
       },
       "contributor": "Nagi-ovo"
+    },
+    "mythos-craft": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-fable-5-1（high）一次生成，未经修改，耗时 46 分 1 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。为保持盲评匿名，删除了文件头注释中模型的自署名「Claude」（1 处注释），其余代码未改动。",
+        "en": "One-shot by claude-fable-5-1 (high) in Claude Code, unmodified, 46 minutes 1 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. To keep the blind arena anonymous, the self-signature \"Claude\" in the header comment was removed (1 comment); no other code was changed."
+      },
+      "contributor": "Nagi-ovo"
     }
   }
 }
