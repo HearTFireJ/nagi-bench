@@ -3,6 +3,7 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { compareModels, vendorRanks } from './model-order'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const modelsDir = join(root, 'models')
@@ -87,7 +88,15 @@ function registryGroups(): RegistryGroup[] {
     if (!existing || order < existing.order) group.harnesses.set(harness, { label: harness, order })
   }
 
-  return [...groups.values()].sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+  const asModel = (g: RegistryGroup) => ({
+    id: g.label,
+    label: g.label,
+    vendor: g.vendor,
+    order: g.order === Number.MAX_SAFE_INTEGER ? undefined : g.order,
+  })
+  const list = [...groups.values()]
+  const cmp = compareModels(vendorRanks(list.map(asModel)))
+  return list.sort((a, b) => cmp(asModel(a), asModel(b)))
 }
 
 function table(lang: 'zh' | 'en'): string {

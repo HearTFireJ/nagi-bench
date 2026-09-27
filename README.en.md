@@ -31,16 +31,18 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 | Model | Vendor | Harness x Effort | Runs |
 |---|---|---|---|
 | Claude Opus 5.5 | Anthropic | Claude Code · High | 06 |
-| Claude Opus 5 | Anthropic | Claude Code · Max<br>Claude Code · xhigh<br>Claude Code · High | 16 |
 | Claude Fable 5.1 | Anthropic | Claude Code · High | 06 |
+| Claude Opus 5 | Anthropic | Claude Code · Max<br>Claude Code · xhigh<br>Claude Code · High | 16 |
 | Claude Fable 5 | Anthropic | Claude Web App · Max<br>Claude Code · High<br>Claude Code · Max<br>Claude Code · xhigh<br>Cursor · High | 11 |
 | Claude Sonnet 5 | Anthropic | Claude Code · Max | 01 |
 | Claude Opus 4.8 | Anthropic | Claude Code · Max<br>Claude Code · xhigh | 08 |
 | Claude Opus 4.7 | Anthropic | Claude Code · Max<br>Cursor · Max | 05 |
 | Claude Opus 4.6 | Anthropic | Claude Code · Max<br>Cursor · Max | 04 |
-| Claude Opus 4.5 | Anthropic | Cursor · Thinking | 02 |
 | Claude Sonnet 4.6 | Anthropic | Claude Code · Max<br>Cursor · High | 03 |
+| Claude Opus 4.5 | Anthropic | Cursor · Thinking | 02 |
 | Claude Haiku 4.5 | Anthropic | Claude Code · Default | 02 |
+| GPT-6 Astra | OpenAI | Codex CLI · xhigh | 06 |
+| GPT-6 Sol | OpenAI | Codex CLI · xhigh | 06 |
 | GPT-5.6-Sol | OpenAI | Codex CLI · ultra<br>Codex CLI · max<br>Codex CLI · xhigh | 10 |
 | GPT-5.6-Terra | OpenAI | Codex CLI · ultra<br>Codex CLI · xhigh | 04 |
 | GPT-5.5 Pro | OpenAI | ChatGPT Web · Extended Pro | 03 |
@@ -48,12 +50,15 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 | GPT-5.4 | OpenAI | Cursor · xhigh<br>Codex CLI · xhigh | 06 |
 | GPT-5.3 Codex | OpenAI | Cursor · xhigh | 02 |
 | GPT-5.2 | OpenAI | Cursor · xhigh | 02 |
-| Gemini 3.1 Pro | Google | AntiGravity · High<br>Cursor · Default<br>Gemini Web · Deep Think<br>Google AI Studio · High | 11 |
 | Gemini 3.7 Flash | Google | AntiGravity · Low<br>AntiGravity · Medium<br>AntiGravity · High | 08 |
 | Gemini 3.6 Flash | Google | AntiGravity · High | 05 |
+| Gemini 3.5 Flash | Google | AntiGravity · High<br>Cursor · Default<br>Google AI Studio · High | 06 |
+| Gemini 3.1 Pro | Google | AntiGravity · High<br>Cursor · Default<br>Gemini Web · Deep Think<br>Google AI Studio · High | 11 |
+| DeepSeek V4.1 Flash | DeepSeek | DeepSeek Harness · High | 04 |
 | DeepSeek V4 Flash | DeepSeek | Claude Code · Max<br>Reasonix · Max | 02 |
 | DeepSeek V4 Flash 0731 | DeepSeek | Claude Code · Max<br>OMP · Default | 05 (showcase 01) |
-| Gemini 3.5 Flash | Google | AntiGravity · High<br>Cursor · Default<br>Google AI Studio · High | 06 |
+| DeepSeek-V4-Pro | DeepSeek | Claude Code · Max<br>Qoder · Max<br>Open Code · High | 05 |
+| DeepSeek V4 Pro 0813 | DeepSeek | DeepSeek Harness · High<br>DeepSeek Harness · Minimal · High<br>DeepSeek Harness · Max<br>Codex CLI · xhigh | 21 (showcase 01) |
 | Grok 4.7 | xAI | Grok Build TUI · High | 06 |
 | Grok 4.6 | xAI | Grok Build TUI · High | 06 |
 | Grok 4.5 | xAI | Grok Build TUI · High | 03 |
@@ -62,9 +67,6 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 | Nex-N2-Pro | Nex-AGI | Claude Code · Max | 02 |
 | Composer 2.5 | Cursor | Cursor · Max<br>Cursor · Default<br>Grok Build TUI · Default | 05 |
 | Mistral Medium 3.5 | Mistral AI | Vibe · Thinking | 02 |
-| DeepSeek-V4-Pro | DeepSeek | Claude Code · Max<br>Qoder · Max<br>Open Code · High | 05 |
-| DeepSeek V4 Pro 0813 | DeepSeek | DeepSeek Harness · High<br>DeepSeek Harness · Minimal · High<br>DeepSeek Harness · Max<br>Codex CLI · xhigh | 21 (showcase 01) |
-| DeepSeek V4.1 Flash | DeepSeek | DeepSeek Harness · High | 04 |
 | Doubao Seed 2.0 Pro | ByteDance | Doubao Web · Pro Mode | 01 |
 | Doubao Seed 2.0 Mini | ByteDance | Doubao Web · Fast Mode | 01 |
 | MiMo V2.5 | Xiaomi | MiMo Code · High | 03 |
@@ -78,18 +80,16 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 | GLM-5.2 | Zhipu AI | ZCode · Max<br>Qoder · Max | 05 |
 | GLM-5.1 | Zhipu AI | ZCode · Max | 01 |
 | GLM-5 Turbo | Zhipu AI | ZCode · Thinking | 03 |
-| Qwen3.7-Max | Alibaba | Qoder · Default | 03 |
 | Qwen3.8-Max-Preview | Alibaba | Qoder · Default<br>Qwen Studio Web · Thinking | 06 |
-| Qwen 3.6 27B | Alibaba | OMP · Default | 01 (showcase 01) |
-| Step 3.7 Flash | StepFun | Claude Code · High | 02 |
-| Spark X2 | iFlytek | Web · Reasoning | 01 |
-| Spark X2.5 | iFlytek | Spark Web Harness · Reasoning | 01 |
-| Inkling | Thinking Machines Lab | Tinker Web · xHigh | 02 |
-| Inkling-Small | Thinking Machines Lab | Tinker Web · xHigh | 03 |
 | Qoder Ultimate | Alibaba | Qoder · Default<br>Qoder · Max | 05 |
 | Qwen 3.8 27B | Alibaba | OMP · Default | 01 (showcase 01) |
-| GPT-6 Astra | OpenAI | Codex CLI · xhigh | 06 |
-| GPT-6 Sol | OpenAI | Codex CLI · xhigh | 06 |
+| Qwen3.7-Max | Alibaba | Qoder · Default | 03 |
+| Qwen 3.6 27B | Alibaba | OMP · Default | 01 (showcase 01) |
+| Step 3.7 Flash | StepFun | Claude Code · High | 02 |
+| Spark X2.5 | iFlytek | Spark Web Harness · Reasoning | 01 |
+| Spark X2 | iFlytek | Web · Reasoning | 01 |
+| Inkling | Thinking Machines Lab | Tinker Web · xHigh | 02 |
+| Inkling-Small | Thinking Machines Lab | Tinker Web · xHigh | 03 |
 <!-- registry:end -->
 
 ## Arena blind battles & community board

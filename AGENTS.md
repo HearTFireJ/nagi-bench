@@ -31,7 +31,7 @@ Do **not** touch anything else. In particular:
   "harness": "Reasonix",           // the tool/agent/UI you ran it in (required)
   "effort": "Max",                 // thinking budget / effort level (required)
   "artifactDir": "deepseek-v4-flash/reasonix-max", // optional; defaults to <model-id>
-  "order": 50,                      // optional display sort
+  "order": 50,                      // optional; newer versions sort first automatically (scripts/model-order.ts) — order only breaks ties within the same version
   "runs": {
     "skeleton-watch": {
       "note": {                     // REQUIRED, bilingual, zh first, no emojis
