@@ -30,6 +30,7 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 
 | Model | Vendor | Harness x Effort | Runs |
 |---|---|---|---|
+| Claude Opus 5.5 | Anthropic | Claude Code · High | 06 |
 | Claude Opus 5 | Anthropic | Claude Code · Max<br>Claude Code · xhigh<br>Claude Code · High | 16 |
 | Claude Fable 5 | Anthropic | Claude Web App · Max<br>Claude Code · High<br>Claude Code · Max<br>Claude Code · xhigh<br>Cursor · High | 11 |
 | Claude Sonnet 5 | Anthropic | Claude Code · Max | 01 |
@@ -52,6 +53,7 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 | DeepSeek V4 Flash | DeepSeek | Claude Code · Max<br>Reasonix · Max | 02 |
 | DeepSeek V4 Flash 0731 | DeepSeek | Claude Code · Max<br>OMP · Default | 05 (showcase 01) |
 | Gemini 3.5 Flash | Google | AntiGravity · High<br>Cursor · Default<br>Google AI Studio · High | 06 |
+| Grok 4.7 | xAI | Grok Build TUI · High | 03 |
 | Grok 4.6 | xAI | Grok Build TUI · High | 06 |
 | Grok 4.5 | xAI | Grok Build TUI · High | 03 |
 | Grok Build | xAI | Grok Build TUI · Max | 02 |
@@ -85,7 +87,8 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 | Inkling-Small | Thinking Machines Lab | Tinker Web · xHigh | 03 |
 | Qoder Ultimate | Alibaba | Qoder · Default<br>Qoder · Max | 05 |
 | Qwen 3.8 27B | Alibaba | OMP · Default | 01 (showcase 01) |
-| GPT-6 Astra | OpenAI | Codex CLI · xhigh | 03 |
+| GPT-6 Astra | OpenAI | Codex CLI · xhigh | 06 |
+| GPT-6 Sol | OpenAI | Codex CLI · xhigh | 06 |
 <!-- registry:end -->
 
 ## Arena blind battles & community board
