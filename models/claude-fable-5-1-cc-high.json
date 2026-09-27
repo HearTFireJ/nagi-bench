@@ -1,0 +1,17 @@
+{
+  "label": "Claude Fable 5.1",
+  "vendor": "Anthropic",
+  "harness": "Claude Code",
+  "effort": "High",
+  "artifactDir": "claude-fable-5-1/claude-code-high",
+  "order": 9.8,
+  "runs": {
+    "pelican-cycling": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-fable-5-1（high）一次生成，未经修改，耗时约 2.5 分钟。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。模型已写出完整 SVG，但 runner 在收尾时因沙箱内 OAuth 凭证刷新失败而记为失败；此处提交该运行产出的 SVG，内容未改动。",
+        "en": "One-shot by claude-fable-5-1 (high) in Claude Code, unmodified, about 2.5 minutes. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. The model wrote a complete SVG, but the runner marked the run failed at the end because the sandboxed OAuth credential could not be refreshed; the SVG produced by that run is submitted with no content changes."
+      },
+      "contributor": "Nagi-ovo"
+    }
+  }
+}
