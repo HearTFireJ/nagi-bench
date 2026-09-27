@@ -26,6 +26,14 @@
         "en": "One-shot by claude-fable-5-1 (high) in Claude Code, unmodified, 46 minutes 1 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. To keep the blind arena anonymous, the self-signature \"Claude\" in the header comment was removed (1 comment); no other code was changed."
       },
       "contributor": "Nagi-ovo"
+    },
+    "turf-war": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-fable-5-1（high）一次生成，未经修改，耗时 27 分 37 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。按案例规则策略文件不公开、仅注册运行；产出文件仅按模型 id 重命名，内容逐字节未改。自命名「狐步圈地」。",
+        "en": "One-shot by claude-fable-5-1 (high) in Claude Code, unmodified, 27 minutes 37 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. Per case rules the policy file is unpublished; this registers the run. The produced file was only renamed to the model id, byte-identical otherwise. It named itself \"狐步圈地\"."
+      },
+      "contributor": "Nagi-ovo",
+      "agentName": "狐步圈地"
     }
   }
 }
