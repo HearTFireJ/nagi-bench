@@ -12,6 +12,13 @@
         "en": "One-shot by claude-fable-5-1 (high) in Claude Code, unmodified, about 2.5 minutes. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. The model wrote a complete SVG, but the runner marked the run failed at the end because the sandboxed OAuth credential could not be refreshed; the SVG produced by that run is submitted with no content changes."
       },
       "contributor": "Nagi-ovo"
+    },
+    "skeleton-watch": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-fable-5-1（high）一次生成，未经修改，耗时 29 分 44 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。为保持盲评匿名，将表盘与标题中模型自署的品牌名「Fable / Calibre F51」替换为「Atelier / Calibre A51」（共 2 处文字），其余代码未改动。",
+        "en": "One-shot by claude-fable-5-1 (high) in Claude Code, unmodified, 29 minutes 44 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. To keep the blind arena anonymous, the self-identifying brand \"Fable / Calibre F51\" on the dial and title was replaced with \"Atelier / Calibre A51\" (2 text strings); no other code was changed."
+      },
+      "contributor": "Nagi-ovo"
     }
   }
 }
