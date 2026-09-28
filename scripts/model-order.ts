@@ -3,10 +3,13 @@
 //
 // 1. Vendors keep their block position: a vendor ranks by the smallest
 //    `order` among its entries (vendors without any `order` go last).
-// 2. Inside a vendor, the newer version comes first, parsed from the first
-//    number in the label ("Claude Fable 5.1" -> 5.1, "GPT-6 Sol" -> 6), so a
-//    new release never has to be slotted in by hand.
-// 3. Same version (or a label without a number): hand-set `order`, then id.
+// 2. Inside a vendor, flagship tiers come before light ones: labels with
+//    Flash / Mini / Lite / Nano / Small sort after Pro / Max / unmarked ones.
+// 3. Then the newer version comes first, parsed from the first number in the
+//    label ("Claude Fable 5.1" -> 5.1, "GPT-6 Sol" -> 6), so a new release
+//    never has to be slotted in by hand; a trailing MMDD snapshot
+//    ("DeepSeek V4 Pro 0813") breaks ties, newest first.
+// 4. Otherwise: hand-set `order`, then id.
 
 export interface OrderedModel {
   id: string
@@ -18,6 +21,17 @@ export interface OrderedModel {
 export function labelVersion(label: string): number | null {
   const match = label.match(/(\d+(?:\.\d+)?)/)
   return match ? Number(match[1]) : null
+}
+
+const LIGHT_TIER = /(?<![a-z])(flash|mini|lite|nano|small)(?![a-z])/i
+
+export function labelTier(label: string): number {
+  return LIGHT_TIER.test(label) ? 1 : 0
+}
+
+export function labelSnapshot(label: string): number {
+  const match = label.match(/\s(\d{4})$/)
+  return match ? Number(match[1]) : 0
 }
 
 export function vendorRanks(models: OrderedModel[]): Map<string, number> {
@@ -34,9 +48,13 @@ export function compareModels(ranks: Map<string, number>) {
   const handOrder = (m: OrderedModel) => (typeof m.order === 'number' ? m.order : rank(m) + 0.99)
   return (a: OrderedModel, b: OrderedModel): number => {
     if (rank(a) !== rank(b)) return rank(a) - rank(b)
+    const tier = labelTier(a.label) - labelTier(b.label)
+    if (tier) return tier
     const va = labelVersion(a.label)
     const vb = labelVersion(b.label)
     if (va !== null && vb !== null && va !== vb) return vb - va
+    const snapshot = labelSnapshot(b.label) - labelSnapshot(a.label)
+    if (va !== null && va === vb && snapshot) return snapshot
     return handOrder(a) - handOrder(b) || a.id.localeCompare(b.id)
   }
 }
