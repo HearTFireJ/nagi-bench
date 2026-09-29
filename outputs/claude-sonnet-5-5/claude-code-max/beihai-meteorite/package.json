@@ -1,0 +1,23 @@
+{
+  "name": "meteor-shower-voxel-film",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "陨石雨 — 一部程序化生成的体素风 Three.js 短片",
+  "scripts": {
+    "dev": "vite --base=./",
+    "build": "vite build --base=./",
+    "preview": "vite preview --base=./",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@agentbench/cinematic-player": "file:/opt/agentbench/cinematic-player",
+    "@agentbench/voxel-kit": "file:/opt/agentbench/voxel-kit",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.180.0",
+    "typescript": "5.9.2",
+    "vite": "8.2.0"
+  }
+}

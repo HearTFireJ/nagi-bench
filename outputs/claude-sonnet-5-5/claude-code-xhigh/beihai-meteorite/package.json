@@ -1,0 +1,25 @@
+{
+  "name": "meteor-rain-voxel-film",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "《陨石雨》— 章北海 · 程序化体素 3D 短片（Three.js）",
+  "scripts": {
+    "dev": "vite --configLoader runner",
+    "build": "vite build --configLoader runner",
+    "typecheck": "tsc --noEmit",
+    "frames": "bun --preload ./tools/inline-plugin.ts tools/preview.ts",
+    "check": "bun --preload ./tools/inline-plugin.ts tools/harness.ts",
+    "check:audio": "bun --preload ./tools/inline-plugin.ts tools/audio-check.ts"
+  },
+  "dependencies": {
+    "@agentbench/cinematic-player": "file:/opt/agentbench/cinematic-player",
+    "@agentbench/voxel-kit": "file:/opt/agentbench/voxel-kit",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.180.0",
+    "typescript": "5.9.2",
+    "vite": "8.2.0"
+  }
+}

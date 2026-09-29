@@ -1,0 +1,36 @@
+{
+  "name": "dust2-fps",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser 5v5 Dust2 FPS prototype: React 18 + TypeScript + three.js, fully procedural (no external assets).",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "sim": "node --import ./scripts/register-ts.mjs scripts/headless.ts",
+    "check": "npm run check:nav && npm run check:phys && npm run check:rules && npm run check:winding && npm run smoke",
+    "check:nav": "node --import ./scripts/register-ts.mjs scripts/navcheck.ts",
+    "check:phys": "node --import ./scripts/register-ts.mjs scripts/physcheck.ts",
+    "check:rules": "node --import ./scripts/register-ts.mjs scripts/scenarios.ts",
+    "check:los": "node --import ./scripts/register-ts.mjs scripts/losaudit.ts",
+    "check:winding": "node scripts/check-winding.ts",
+    "balance": "node --import ./scripts/register-ts.mjs scripts/balance.ts",
+    "smoke": "node --experimental-transform-types --import ./scripts/register-stubs.mjs scripts/smoke-engine.ts",
+    "check:reach": "node --experimental-transform-types --import ./scripts/register-stubs.mjs scripts/check-reach.ts"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.169.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.10"
+  }
+}

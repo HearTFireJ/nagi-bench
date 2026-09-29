@@ -1,0 +1,23 @@
+{
+  "label": "Claude Sonnet 5.5",
+  "vendor": "Anthropic",
+  "harness": "Claude Code",
+  "effort": "Max",
+  "artifactDir": "claude-sonnet-5-5/claude-code-max",
+  "runs": {
+    "cs-dust2": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（max）一次生成，未经修改，耗时 90 分 10 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。运行结束时未产出 dist/ 构建产物，此处提交其完整源码工程（未改动任何代码），由站点部署时从源码打包为单文件。",
+        "en": "One-shot by claude-sonnet-5-5 (max) in Claude Code, unmodified, 90 minutes 10 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. The run ended without a dist/ build, so the complete source project is submitted as produced (no code changes) and bundled into a single file from source at site deploy time."
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "beihai-meteorite": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（max）一次生成，未经修改，耗时 197 分钟。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP。该次运行中模型通过 Bash 执行过带网络请求的脚本，runner 的 No-Web 严格检查因此将其标记为违规；维护者决定保留原样，仅供观察效果，请勿视为严格 No-Web 成绩。本页为其构建产物（部署时由源码打包为单文件）。",
+        "en": "One-shot by claude-sonnet-5-5 (max) in Claude Code, unmodified, 197 minutes. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP. During this run the model executed a Bash script that made network requests, which the runner's strict No-Web check flagged as a violation; the maintainer chose to keep it as-is for observation only, so do not treat it as a strict No-Web result. This page is its build output (bundled from source into a single file at deploy time)."
+      },
+      "contributor": "Nagi-ovo"
+    }
+  }
+}

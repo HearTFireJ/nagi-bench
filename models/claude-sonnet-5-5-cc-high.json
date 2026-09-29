@@ -1,0 +1,45 @@
+{
+  "label": "Claude Sonnet 5.5",
+  "vendor": "Anthropic",
+  "harness": "Claude Code",
+  "effort": "High",
+  "artifactDir": "claude-sonnet-5-5/claude-code-high",
+  "runs": {
+    "cs-dust2": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（high）一次生成，未经修改，耗时 40 分 17 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。运行结束时未产出 dist/ 构建产物，此处提交其完整源码工程（未改动任何代码），由站点部署时从源码打包为单文件。项目原位于工作区的 dust2-fps/ 子目录，为符合仓库目录结构仅将该目录整体上移一级，文件内容未改动。",
+        "en": "One-shot by claude-sonnet-5-5 (high) in Claude Code, unmodified, 40 minutes 17 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. The run ended without a dist/ build, so the complete source project is submitted as produced (no code changes) and bundled into a single file from source at site deploy time. The project originally lived in a dust2-fps/ subdirectory of the workspace; it was moved up one level to match the repo layout, with no file contents changed."
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "turf-war": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（high）一次生成，未经修改，耗时 7 分 58 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。按案例规则策略文件不公开、仅注册运行；产出文件仅按模型 id 重命名，内容逐字节未改。自命名「圈地游击」。",
+        "en": "One-shot by claude-sonnet-5-5 (high) in Claude Code, unmodified, 7 minutes 58 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. Per case rules the policy file is unpublished; this registers the run. The produced file was only renamed to the model id, byte-identical otherwise. It named itself \"圈地游击\"."
+      },
+      "contributor": "Nagi-ovo",
+      "agentName": "圈地游击"
+    },
+    "beihai-meteorite": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（high）一次生成，未经修改，耗时 105 分 33 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。本页为其构建产物（部署时由源码打包为单文件）。",
+        "en": "One-shot by claude-sonnet-5-5 (high) in Claude Code, unmodified, 105 minutes 33 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. This page is its build output (bundled from source into a single file at deploy time)."
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "mythos-craft": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（high）一次生成，未经修改，耗时 79 分 19 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by claude-sonnet-5-5 (high) in Claude Code, unmodified, 79 minutes 19 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "skeleton-watch": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（high）一次生成，未经修改，耗时 32 分 22 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by claude-sonnet-5-5 (high) in Claude Code, unmodified, 32 minutes 22 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
+    }
+  }
+}

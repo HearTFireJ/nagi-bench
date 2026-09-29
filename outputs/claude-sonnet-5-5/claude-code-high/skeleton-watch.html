@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>AETERNA · Calibre AX-07 镂空机械表 — 交互式 3D 展示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#d9bb8c; --gold2:#f4e4c4; --ink:#ece8df; --dim:#8f8b83; --faint:#5d5a55;
+  --panel:rgba(13,14,17,.66); --line:rgba(217,187,140,.22); --line2:rgba(255,255,255,.07);
+  --hl:#5cc8ff;
+  --serif:"Cormorant Garamond","Songti SC","Noto Serif SC","STSong",Georgia,serif;
+  --sans:"Inter","PingFang SC","Noto Sans SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#06070a;color:var(--ink);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+#app{position:fixed;inset:0}
+#app canvas{display:block;outline:none;touch-action:none}
+#vignette{position:fixed;inset:0;pointer-events:none;background:
+  radial-gradient(ellipse 75% 70% at 46% 46%,transparent 40%,rgba(0,0,0,.62) 100%),
+  linear-gradient(180deg,rgba(0,0,0,.45) 0,transparent 16%,transparent 80%,rgba(0,0,0,.55) 100%)}
+#leaders{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#leaders path{fill:none;stroke:rgba(217,187,140,.55);stroke-width:1}
+#leaders path.hot{stroke:var(--hl);stroke-width:1.4}
+#leaders circle{fill:var(--gold);stroke:rgba(0,0,0,.6);stroke-width:1}
+#leaders circle.hot{fill:var(--hl)}
+.lbl{position:fixed;left:0;top:0;z-index:4;font-size:11px;letter-spacing:.04em;padding:4px 9px 4px;border:1px solid var(--line);
+  background:rgba(9,10,12,.74);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;cursor:pointer;
+  border-radius:2px;opacity:0;pointer-events:none;transition:opacity .35s,border-color .2s,background .2s;will-change:transform}
+.lbl.show{opacity:1;pointer-events:auto}
+.lbl b{font-weight:500;color:var(--gold2)}
+.lbl i{font-family:var(--serif);font-style:italic;color:var(--dim);margin-left:6px;font-size:12px}
+.lbl:hover,.lbl.hot{border-color:var(--hl);background:rgba(12,26,36,.85)}
+.lbl.sel{border-color:#ffb84a;background:rgba(40,28,10,.85)}
+#brand{position:fixed;left:34px;top:28px;z-index:5;pointer-events:none}
+#brand .mark{font-family:var(--serif);font-size:30px;letter-spacing:.42em;font-weight:500;color:var(--gold2);text-shadow:0 2px 24px rgba(0,0,0,.8)}
+#brand .sub{margin-top:6px;font-size:10px;letter-spacing:.32em;color:var(--dim);text-transform:uppercase}
+#brand .rule{width:54px;height:1px;background:linear-gradient(90deg,var(--gold),transparent);margin-top:12px}
+#hint{position:fixed;left:34px;bottom:26px;z-index:5;font-size:11px;color:var(--faint);letter-spacing:.06em;line-height:1.9;pointer-events:none}
+#hint b{color:var(--dim);font-weight:500}
+#tip{position:fixed;z-index:8;pointer-events:none;padding:7px 12px;border:1px solid var(--line);background:rgba(8,9,11,.85);backdrop-filter:blur(10px);
+  font-size:12px;border-radius:2px;transform:translate(16px,16px);opacity:0;transition:opacity .15s;white-space:nowrap}
+#tip.on{opacity:1}
+#tip b{color:var(--gold2);font-weight:500}
+#tip i{display:block;font-family:var(--serif);font-size:13px;color:var(--dim)}
+/* dock */
+#dock{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:6;display:flex;gap:6px;align-items:center;padding:7px;
+  background:var(--panel);border:1px solid var(--line2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:14px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05);max-width:calc(100vw - 24px);flex-wrap:wrap;justify-content:center}
+#dock .sep{width:1px;height:26px;background:var(--line2);margin:0 4px}
+.btn{font:500 12px/1 var(--sans);letter-spacing:.05em;color:var(--ink);background:transparent;border:1px solid transparent;padding:10px 13px;border-radius:9px;cursor:pointer;
+  display:flex;align-items:center;gap:7px;transition:all .2s;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.06)}
+.btn.on{background:linear-gradient(180deg,rgba(217,187,140,.22),rgba(217,187,140,.08));border-color:var(--line);color:var(--gold2)}
+.btn kbd{font:500 9px var(--sans);color:var(--faint);border:1px solid var(--line2);border-radius:3px;padding:2px 4px}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sw{width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.25);cursor:pointer;position:relative;transition:transform .2s}
+.sw:hover{transform:scale(1.15)}
+.sw.on{outline:1px solid var(--gold2);outline-offset:3px}
+/* panel */
+#panel{position:fixed;right:22px;top:22px;bottom:96px;width:338px;z-index:5;background:var(--panel);border:1px solid var(--line2);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:16px;overflow:hidden auto;box-shadow:0 30px 80px rgba(0,0,0,.6);
+  transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s;scrollbar-width:thin;scrollbar-color:#3a3833 transparent}
+#panel.hide{transform:translateX(calc(100% + 40px));opacity:0;pointer-events:none}
+#panel section{padding:16px 20px;border-bottom:1px solid var(--line2)}
+#panel section:last-child{border-bottom:0}
+.eyebrow{font-size:9px;letter-spacing:.38em;color:var(--gold);text-transform:uppercase}
+#panel h2{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:.06em;margin-top:6px;color:var(--gold2)}
+#panel h2 small{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.2em;color:var(--dim);font-weight:400;margin-top:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.kv{font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.kv span{display:block;font-size:14px;letter-spacing:.02em;color:var(--ink);text-transform:none;margin-top:3px;font-weight:400}
+.gauge{margin-top:12px}
+.gauge .row{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);letter-spacing:.06em}
+.gauge .row b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:6px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8a6d3f,var(--gold2));border-radius:2px}
+#clock{font-family:var(--serif);font-size:34px;letter-spacing:.08em;color:var(--gold2);font-variant-numeric:tabular-nums;margin-top:2px}
+#clock small{font-size:13px;color:var(--dim);letter-spacing:.2em;margin-left:8px}
+#card .empty{font-size:12px;color:var(--faint);line-height:1.8}
+#card h3{font-family:var(--serif);font-size:24px;font-weight:500;color:var(--gold2);letter-spacing:.03em}
+#card h3 i{display:block;font-size:14px;color:var(--dim);font-weight:400;margin-top:2px}
+#card .mat{display:inline-block;margin:10px 0 8px;font-size:10px;letter-spacing:.14em;padding:4px 9px;border:1px solid var(--line);color:var(--gold);border-radius:20px}
+#card p{font-size:12.5px;line-height:1.85;color:#c9c5bc}
+#card .specs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+#card .foc{margin-top:14px;display:flex;gap:8px}
+.chip{font:500 11px var(--sans);letter-spacing:.06em;color:var(--dim);background:transparent;border:1px solid var(--line2);padding:6px 10px;border-radius:20px;cursor:pointer;transition:all .18s}
+.chip:hover,.chip.hot{color:var(--ink);border-color:var(--hl);background:rgba(92,200,255,.08)}
+.chip.sel{color:#ffd591;border-color:#ffb84a;background:rgba(255,184,74,.1)}
+#plist{display:flex;flex-wrap:wrap;gap:6px}
+#ptoggle{position:fixed;right:22px;top:22px;z-index:7;width:38px;height:38px;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--gold2);
+  font:italic 500 18px var(--serif);cursor:pointer;backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center}
+#ptoggle.show{display:flex}
+#pclose{position:absolute;right:14px;top:14px;background:none;border:0;color:var(--dim);cursor:pointer;font-size:18px;z-index:2}
+/* loader */
+#loader{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 45%,#12141a 0,#050608 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 1.2s ease .1s,visibility 1.3s;gap:22px}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none}
+#loader .g{width:86px;height:86px;animation:spin 6s linear infinite}
+#loader .g2{animation-direction:reverse;animation-duration:3.4s}
+#loader .t{font-family:var(--serif);letter-spacing:.5em;font-size:22px;color:var(--gold2);padding-left:.5em}
+#loader .m{font-size:11px;letter-spacing:.28em;color:var(--dim)}
+#loader .p{width:180px;height:1px;background:rgba(255,255,255,.1);overflow:hidden}
+#loader .p i{display:block;height:100%;width:30%;background:var(--gold);animation:slide 1.4s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(420%)}}
+@media (max-width:900px){#panel{width:min(338px,calc(100vw - 30px));bottom:auto;max-height:46vh;top:auto;bottom:150px}#brand .mark{font-size:22px}#hint{display:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="vignette"></div>
+<svg id="leaders"></svg>
+<div id="labels"></div>
+
+<div id="brand"><div class="mark">AETERNA</div><div class="sub">Calibre AX-07 · Openworked Manual-Wind</div><div class="rule"></div></div>
+<div id="hint"><b>拖动</b> 旋转 &nbsp;·&nbsp; <b>滚轮</b> 缩放 &nbsp;·&nbsp; <b>右键</b> 平移<br><b>悬停</b> 高亮零件 &nbsp;·&nbsp; <b>点击</b> 查看详情</div>
+<div id="tip"></div>
+
+<button id="ptoggle" title="机芯信息">i</button>
+<aside id="panel">
+  <button id="pclose" title="收起">×</button>
+  <section>
+    <div class="eyebrow">Calibre</div>
+    <h2>AX-07<small>镂空手动上链机芯</small></h2>
+  </section>
+  <section>
+    <div class="grid" id="specs"></div>
+  </section>
+  <section>
+    <div class="eyebrow">实时运转 · Live</div>
+    <div id="clock">--:--:--<small></small></div>
+    <div class="gauge"><div class="row"><span>摆轮振幅</span><b id="gAmp">—</b></div><div class="bar"><i id="bAmp"></i></div></div>
+    <div class="gauge"><div class="row"><span>动力储备</span><b id="gPow">—</b></div><div class="bar"><i id="bPow"></i></div></div>
+    <div class="gauge"><div class="row"><span>擒纵轮转速</span><b id="gEsc">—</b></div><div class="bar"><i id="bEsc"></i></div></div>
+  </section>
+  <section id="card"></section>
+  <section>
+    <div class="eyebrow" style="margin-bottom:12px">零件索引 · Components</div>
+    <div id="plist"></div>
+  </section>
+</aside>
+
+<div id="dock">
+  <button class="btn" id="bExplode"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M4 8l3 2M20 8l-3 2M4 16l3-2M20 16l-3-2"/><rect x="8" y="9" width="8" height="6" rx="1.5"/></svg>爆炸视图<kbd>E</kbd></button>
+  <button class="btn" id="bLabels"><svg viewBox="0 0 24 24"><path d="M4 7h9M4 12h6M4 17h9"/><circle cx="18" cy="7" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="18" cy="17" r="1.6"/></svg>标签<kbd>L</kbd></button>
+  <button class="btn" id="bSpin"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.7-6"/><path d="M20 4v4h-4"/></svg>自动旋转<kbd>R</kbd></button>
+  <div class="sep"></div>
+  <button class="btn" id="bNight"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>夜光<kbd>N</kbd></button>
+  <button class="btn" id="bSpeed"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M9 3h6"/></svg><span id="speedTxt">机芯 0.5×</span><kbd>S</kbd></button>
+  <button class="btn" id="bWarp"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg><span id="warpTxt">时间 ×1</span><kbd>T</kbd></button>
+  <button class="btn" id="bWind"><svg viewBox="0 0 24 24"><path d="M9 4h6M12 4v4"/><circle cx="12" cy="14" r="6"/><path d="M12 11v3h3"/></svg>上链<kbd>W</kbd></button>
+  <div class="sep"></div>
+  <button class="btn" data-view="front">正面</button>
+  <button class="btn" data-view="iso">45°</button>
+  <button class="btn" data-view="side">侧面</button>
+  <button class="btn" data-view="back">机芯背面</button>
+  <div class="sep"></div>
+  <div id="themes" style="display:flex;gap:9px;padding:0 6px"></div>
+</div>
+
+<div id="loader">
+  <svg class="g" viewBox="0 0 100 100" fill="none" stroke="#d9bb8c" stroke-width="1.2">
+    <circle cx="50" cy="50" r="30"/><circle cx="50" cy="50" r="8"/>
+    <g stroke-width="5" stroke-dasharray="3.6 3.4"><circle cx="50" cy="50" r="38"/></g>
+    <path d="M50 20v22M50 58v22M20 50h22M58 50h22M29 29l16 16M55 55l16 16M71 29L55 45M45 55L29 71"/>
+  </svg>
+  <div class="t">AETERNA</div>
+  <div class="p"><i></i></div>
+  <div class="m" id="loadmsg">正在装配机芯…</div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script>
+  setTimeout(function(){ if(!window.__ready){ var m=document.getElementById('loadmsg'); if(m) m.textContent='加载较慢或 Three.js CDN 不可达，请检查网络后刷新页面'; } }, 15000);
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ════════════════════════════════════════════════════════════════════
+   零件资料库
+   ════════════════════════════════════════════════════════════════════ */
+const PARTS = {
+  crystal:{ zh:'蓝宝石水晶玻璃', en:'Sapphire Crystal', mat:'合成蓝宝石 · 莫氏硬度 9',
+    desc:'高穹顶蓝宝石水晶，内外双面防反光镀膜，几乎不会被刮伤；水晶边缘的斜切在光线下会形成一圈细腻的高光弧。',
+    specs:[['曲率半径','63 mm'],['厚度','2.2 mm'],['镀膜','双面 AR']] },
+  bezel:{ zh:'表圈', en:'Bezel', mat:'镜面抛光贵金属',
+    desc:'由八颗六角螺丝固定在中框上。表圈的斜切倒角经过手工镜面抛光，与拉丝的中框侧面形成锐利对比。',
+    specs:[['螺丝','8 × 六角'],['工艺','镜面抛光'],['外径','41 mm']] },
+  hand_h:{ zh:'时针', en:'Hour Hand', mat:'镂空剑形 · Super-LumiNova',
+    desc:'剑形镂空时针，镂空窗内填充 Super-LumiNova 荧光涂料，白天充能、夜间释放冷绿色光芒。',
+    specs:[['长度','10.2 mm'],['夜光','C3 级'],['厚度','0.25 mm']] },
+  hand_m:{ zh:'分针', en:'Minute Hand', mat:'镂空剑形 · Super-LumiNova',
+    desc:'分针指尖延伸至分钟刻度环外缘，通过分轮管与中心轮同轴驱动，镂空窗内同样注入荧光物质。',
+    specs:[['长度','16.6 mm'],['夜光','C3 级'],['转速','1 圈/小时']] },
+  hand_s:{ zh:'秒针', en:'Seconds Hand', mat:'烤漆钢 · 夜光尾盘',
+    desc:'细长的中心秒针，配平衡尾盘。在 28,800 vph 的振频下每秒跳动 8 次，走针细腻近乎连续。',
+    specs:[['跳动','8 次/秒'],['长度','18.4 mm'],['配重','夜光尾盘']] },
+  dial:{ zh:'刻度圈与夜光时标', en:'Chapter Ring & Lume Indices', mat:'阳极氧化黄铜 · 荧光时标',
+    desc:'环绕镂空机芯的刻度圈，含 12 个抛光钢框夜光时标与 60 格分钟刻度。品牌字样印刷在水晶下方。',
+    specs:[['时标','12 夜光'],['分钟刻度','60'],['内径','32 mm']] },
+  bridge_barrel:{ zh:'发条盒夹板', en:'Barrel Bridge', mat:'手工倒角 · 日内瓦波纹',
+    desc:'固定发条盒上枢轴的双臂夹板，内角经手工倒角并饰以日内瓦条纹，镶嵌红宝石轴承与蓝钢螺丝。',
+    specs:[['装饰','日内瓦纹'],['倒角','手工 45°'],['螺丝','蓝钢 ×2']] },
+  bridge_train:{ zh:'轮系夹板', en:'Train Bridge', mat:'手工倒角 · 日内瓦波纹',
+    desc:'依次串联发条盒、中心轮、三轮与四轮的上枢轴，是整个传动轮系的骨架。',
+    specs:[['支撑','4 个枢轴'],['装饰','日内瓦纹'],['厚度','0.7 mm']] },
+  bridge_escape:{ zh:'擒纵夹板', en:'Escapement Bridge', mat:'手工倒角 · 日内瓦波纹',
+    desc:'固定擒纵轮与擒纵叉的上枢轴。精确对位关系到擒纵机构的锁止与冲击面是否正确接合。',
+    specs:[['支撑','擒纵轮 / 擒纵叉'],['公差','± 0.01 mm'],['螺丝','蓝钢 ×2']] },
+  cock:{ zh:'摆轮夹板', en:'Balance Cock', mat:'手工倒角 · 日内瓦波纹',
+    desc:'以单点悬臂支撑摆轮上枢轴的夹板，游丝外端固定在夹板下方的游丝桩上，是走时精度的关键。',
+    specs:[['支撑','摆轮上枢轴'],['游丝桩','固定'],['防震','避震器']] },
+  ratchet:{ zh:'棘轮与棘爪', en:'Ratchet Wheel & Click', mat:'抛光钢 · 蓝钢螺丝',
+    desc:'上链时棘轮随发条盒轴旋转，棘爪与弹簧只允许单向转动，防止发条回弹。',
+    specs:[['棘齿','28'],['方向','单向锁止'],['螺丝','蓝钢']] },
+  mainplate:{ zh:'主夹板', en:'Mainplate', mat:'镂空 · 珍珠纹饰',
+    desc:'整个机芯的底座。镂空加工后仅保留承载轮系所需的结构，表面为珍珠纹（Perlage）打磨，可从蓝宝石底盖欣赏。',
+    specs:[['装饰','珍珠纹'],['厚度','1.2 mm'],['宝石','底部轴承']] },
+  barrel:{ zh:'主发条盒', en:'Mainspring Barrel', mat:'镀金鼓轮 · 蓝钢发条',
+    desc:'储存动力的能量核心。开放式鼓轮直接呈现蓝钢发条的螺旋形态，外缘 56 齿驱动中心轮小齿轮。',
+    specs:[['齿数','56'],['动力','72 小时'],['直径','14 mm']] },
+  center:{ zh:'中心轮', en:'Center Wheel', mat:'抛光钢 · 五辐镂空',
+    desc:'位于机芯正中，每小时转一圈，分针即安装于其上。五辐结构在保证强度的同时尽可能减重。',
+    specs:[['大轮 / 小轮','48 / 14'],['转速','1 圈/小时'],['辐条','5']] },
+  third:{ zh:'三轮', en:'Third Wheel', mat:'抛光钢 · 四辐镂空',
+    desc:'将中心轮的动力继续传递给四轮的中间轮，同时提高转速。',
+    specs:[['大轮 / 小轮','36 / 10'],['辐条','4'],['传动比','1 : 4.8']] },
+  fourth:{ zh:'四轮 (秒轮)', en:'Fourth Wheel', mat:'抛光钢 · 三辐镂空',
+    desc:'秒针轴所在的轮，转速为每分钟一圈；其小齿轮直接驱动擒纵轮。',
+    specs:[['大轮 / 小轮','30 / 10'],['转速','1 圈/分钟'],['辐条','3']] },
+  escape:{ zh:'擒纵轮', en:'Escape Wheel', mat:'硬化钢 · 15 齿',
+    desc:'锯齿状擒纵轮每次被擒纵叉释放时前进半个齿距，每一次“嘀嗒”都由它完成。',
+    specs:[['齿数','15'],['步进','12° / 拍'],['节拍','8 拍/秒']] },
+  pallet:{ zh:'擒纵叉', en:'Pallet Fork', mat:'钢 · 红宝石叉瓦',
+    desc:'瑞士锚式擒纵叉。两颗红宝石叉瓦交替锁止并释放擒纵轮，叉口则由摆轮上的红宝石冲击钉拨动。',
+    specs:[['叉瓦','2 × 红宝石'],['摆角','± 5°'],['挡钉','2']] },
+  balance:{ zh:'摆轮', en:'Balance Wheel', mat:'镀金 Glucydur · 调校螺钉',
+    desc:'机械表的“心脏”，以 4 Hz 往复摆动（±260°）。轮缘上的镀金调校螺钉用来微调惯量与走时。',
+    specs:[['振频','28,800 vph'],['直径','10.8 mm'],['调校螺钉','16 颗镀金']] },
+  hairspring:{ zh:'游丝', en:'Hairspring', mat:'Nivarox 合金 · 阿基米德螺旋',
+    desc:'内端固定于摆轮轴，外端固定于游丝桩。它提供回复力，使摆轮做等时性简谐振动，你可以看到它随摆轮“呼吸”。',
+    specs:[['圈数','11.5'],['线宽','0.09 mm'],['材料','Nivarox']] },
+  jewels:{ zh:'红宝石轴承', en:'Ruby Jewels', mat:'合成红宝石 (Al₂O₃)',
+    desc:'合成红宝石硬度极高且摩擦系数极低，被用作各轮轴枢轴的轴承，以及擒纵叉瓦和冲击钉。外圈为镀金托座。',
+    specs:[['硬度','莫氏 9'],['作用','低摩擦'],['托座','镀金']] },
+  screws:{ zh:'蓝钢螺丝', en:'Blued Screws', mat:'热处理蓝钢',
+    desc:'钢制螺丝经约 290 °C 加热氧化形成干涉薄膜，呈现标志性的深蓝色；钉头一字槽经手工抛光倒角。',
+    specs:[['热处理','≈ 290 °C'],['头部','抛光倒角'],['颜色','干涉蓝']] },
+  case:{ zh:'表壳与表耳', en:'Case & Lugs', mat:'拉丝 + 镜面抛光',
+    desc:'40 mm 表壳，中框侧面拉丝、倒角与表耳边缘镜面抛光。表耳轮廓向下弯曲以贴合手腕。',
+    specs:[['直径','40 mm'],['防水','50 m'],['表耳间距','18 mm']] },
+  crown:{ zh:'表冠', en:'Crown', mat:'滚花贵金属',
+    desc:'位于三点钟的上链表冠，22 道滚花提供防滑抓握；通过表柄与离合系统连接至发条盒棘轮。',
+    specs:[['滚花','22'],['直径','5.8 mm'],['功能','手动上链']] },
+  strap:{ zh:'表带', en:'Strap', mat:'手缝小牛皮',
+    desc:'手工缝线的意大利小牛皮表带，内衬软垫，带压纹皮革质感，配针扣。',
+    specs:[['宽度','18 mm'],['皮革','小牛皮'],['缝线','手工']] },
+  caseback:{ zh:'蓝宝石底盖', en:'Sapphire Caseback', mat:'钢 + 蓝宝石玻璃',
+    desc:'六颗螺丝固定的透明底盖，可从背面欣赏镂空机芯的另一面；配 O 形防水圈。',
+    specs:[['螺丝','6'],['玻璃','蓝宝石'],['防水圈','O 形']] }
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   工具函数
+   ════════════════════════════════════════════════════════════════════ */
+const TAU = Math.PI * 2, PI = Math.PI;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+const easeIO = x => { x = clamp(x, 0, 1); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const easeOut = x => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+const $ = s => document.querySelector(s);
+const pol = (r, deg) => [r * Math.cos(deg * PI / 180), r * Math.sin(deg * PI / 180)];
+const addv = (p, q) => [p[0] + q[0], p[1] + q[1]];
+
+const shadowed = (m, cast = true, recv = true) => { m.castShadow = cast; m.receiveShadow = recv; return m; };
+
+function shapeFromPts(pts) {
+  const s = new THREE.Shape();
+  s.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]);
+  s.closePath();
+  return s;
+}
+function pathFromPts(pts) {
+  const p = new THREE.Path();
+  p.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) p.lineTo(pts[i][0], pts[i][1]);
+  p.closePath();
+  return p;
+}
+function circlePts(r, n = 48, cx = 0, cy = 0) {
+  const a = [];
+  for (let i = 0; i < n; i++) { const t = i / n * TAU; a.push([cx + r * Math.cos(t), cy + r * Math.sin(t)]); }
+  return a;
+}
+/** Chaikin 角切割：把粗多边形平滑成有机圆润轮廓 */
+function chaikin(pts, it = 2) {
+  for (let k = 0; k < it; k++) {
+    const out = [], n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      out.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]);
+    }
+    pts = out;
+  }
+  return pts;
+}
+/** 带倒角的挤出网格：几何体精确占据 z0..z1（含倒角） */
+function mkExtrude(outerPts, holes, z0, z1, mat, bevel = 0.04) {
+  const shape = shapeFromPts(outerPts);
+  if (holes) for (const h of holes) shape.holes.push(pathFromPts(h));
+  const depth = Math.max(0.02, (z1 - z0) - 2 * bevel);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 1, curveSegments: 1, steps: 1 });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.z = z0 + (bevel > 0 ? bevel : 0);
+  return shadowed(m);
+}
+/** 沿 Z 轴的圆柱 */
+function cylZ(r, z0, z1, mat, seg = 28, r2 = null) {
+  const g = new THREE.CylinderGeometry(r2 ?? r, r, z1 - z0, seg, 1);
+  g.rotateX(PI / 2); g.translate(0, 0, (z0 + z1) / 2);
+  return shadowed(new THREE.Mesh(g, mat));
+}
+/** 车削体：profile 为 [半径, z]，绕 Z 轴，带折痕法线 */
+function latheZ(profile, seg = 128, crease = 0.5) {
+  const pts = profile.map(p => new THREE.Vector2(p[0], p[1]));
+  let g = new THREE.LatheGeometry(pts, seg);
+  g.rotateX(PI / 2);
+  return toCreasedNormals(g, crease);
+}
+/** 沿路径的变宽臂（夹板 / 主夹板臂）轮廓点 */
+function armOutline(pts, w0, w1) {
+  const n = pts.length, L = [], R = [], tang = [];
+  for (let i = 0; i < n; i++) {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
+    let tx = b[0] - a[0], ty = b[1] - a[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+    tang.push([tx, ty]);
+    const nx = -ty, ny = tx, w = lerp(w0, w1, i / (n - 1));
+    L.push([pts[i][0] + nx * w, pts[i][1] + ny * w]);
+    R.push([pts[i][0] - nx * w, pts[i][1] - ny * w]);
+  }
+  const out = [...L];
+  const cap = (c, t, w, startFrom) => {
+    const a0 = Math.atan2(t[0], -t[1]); // 法线 (-ty,tx) 的角度
+    const arr = [];
+    for (let k = 1; k < 8; k++) { const a = a0 - PI * k / 8 - startFrom; arr.push([c[0] + w * Math.cos(a), c[1] + w * Math.sin(a)]); }
+    return arr;
+  };
+  out.push(...cap(pts[n - 1], tang[n - 1], w1, 0));
+  for (let i = n - 1; i >= 0; i--) out.push(R[i]);
+  out.push(...cap(pts[0], tang[0], w0, PI));
+  return out;
+}
+/** 二次贝塞尔中心线（可带弧度） */
+function bez(a, b, bulge = 0, n = 14) {
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+  const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+  const cx = mx - dy / l * bulge * l, cy = my + dx / l * bulge * l;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, u = 1 - t;
+    pts.push([u * u * a[0] + 2 * u * t * cx + t * t * b[0], u * u * a[1] + 2 * u * t * cy + t * t * b[1]]);
+  }
+  return pts;
+}
+
+/* ─── 齿轮 ─── */
+const MOD = 0.25;
+const TOOTH = [[-.36, -1.25], [-.27, -.2], [-.16, .6], [-.09, 1], [.09, 1], [.16, .6], [.27, -.2], [.36, -1.25]];
+function gearPts(N, r, m = MOD) {
+  const pts = [], D = TAU / N;
+  for (let i = 0; i < N; i++) for (const [af, rf] of TOOTH) {
+    const a = (i + af) * D, rr = r + rf * m;
+    pts.push([rr * Math.cos(a), rr * Math.sin(a)]);
+  }
+  return pts;
+}
+function windowPts(n, k, hubR, rimR, sw, rot = 0) {
+  const a0 = rot + k * TAU / n, a1 = a0 + TAU / n;
+  const dO = Math.asin(sw / 2 / rimR), dI = Math.asin(sw / 2 / hubR), pts = [], S = 4;
+  for (let i = 0; i <= S; i++) { const a = lerp(a0 + dO, a1 - dO, i / S); pts.push([rimR * Math.cos(a), rimR * Math.sin(a)]); }
+  for (let i = 0; i <= S; i++) { const a = lerp(a1 - dI, a0 + dI, i / S); pts.push([hubR * Math.cos(a), hubR * Math.sin(a)]); }
+  return chaikin(pts, 2);
+}
+function makeGear(N, z0, z1, mat, o = {}) {
+  const { hole = 0.35, win = null, bevel = 0.03, phase = 0 } = o;
+  const r = N * MOD / 2, holes = [circlePts(hole, hole > 2 ? 120 : 24)];
+  if (win) for (let k = 0; k < win.n; k++) holes.push(windowPts(win.n, k, win.hub, win.rim, win.sw, win.rot || 0));
+  const m = mkExtrude(gearPts(N, r), holes, z0, z1, mat, bevel);
+  m.rotation.z = phase;
+  return m;
+}
+/** 两齿轮啮合：已知 A 的相位，求 B 的相位（齿心对齿隙） */
+function meshPhase(Apos, NA, phiA, Bpos, NB) {
+  const th = Math.atan2(Bpos[1] - Apos[1], Bpos[0] - Apos[0]);
+  const pa = (th - phiA) * NA / TAU;
+  return (th + PI) - TAU * (0.5 - pa) / NB;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   渲染器 / 场景 / 相机 / 后期
+   ════════════════════════════════════════════════════════════════════ */
+const container = $('#app');
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+const LOW = /[?&]low\b/.test(location.search) || (navigator.hardwareConcurrency || 8) < 4;   // ?low 可强制低画质
+const PR = LOW ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+renderer.setPixelRatio(PR);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const BG = 0x06070a;
+scene.background = new THREE.Color(BG);
+const camera = new THREE.PerspectiveCamera(28, innerWidth / innerHeight, 1, 3000);
+
+const composer = new EffectComposer(renderer);
+composer.renderTarget1.samples = 4;
+composer.renderTarget2.samples = 4;
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.3, 0.55, 0.9);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+/* ─── 摄影棚环境：一圈柔光箱，为金属提供“奢华腕表摄影”式反射 ─── */
+function buildEnvironment() {
+  const env = new THREE.Scene();
+  env.add(new THREE.Mesh(new THREE.BoxGeometry(700, 420, 700), new THREE.MeshBasicMaterial({ color: 0x090a0d, side: THREE.BackSide })));
+  const soft = (w, h, pos, k, color = 0xffffff) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), side: THREE.DoubleSide }));
+    m.position.set(pos[0], pos[1], pos[2]); m.lookAt(0, 0, 0); env.add(m);
+  };
+  soft(190, 130, [0, 170, 30], 5.5, 0xfff6ea);      // 顶部大柔光箱
+  soft(70, 170, [-170, 30, 120], 15, 0xffeedd);     // 左前主光条
+  soft(34, 180, [190, 25, 60], 11, 0xd6e6ff);       // 右侧冷光条
+  soft(30, 170, [-100, 25, -190], 12, 0xffffff);    // 左后轮廓光
+  soft(30, 170, [110, 25, -180], 10, 0xcfe0ff);     // 右后轮廓光
+  soft(230, 30, [0, -15, 210], 3.0, 0xffffff);      // 前方低位补光条
+  soft(26, 26, [90, 100, 130], 42);                 // 亮点（倒角上的闪光）
+  soft(14, 14, [-70, 120, 100], 60, 0xffe0b0);
+  soft(18, 18, [120, 70, -70], 32);
+  soft(12, 12, [-30, 60, 190], 34, 0xffffff);
+  soft(340, 340, [0, -130, 0], 0.55, 0x9aa0aa);     // 地面反弹
+  const pm = new THREE.PMREMGenerator(renderer);
+  const rt = pm.fromScene(env, 0.035, 1, 2000);
+  pm.dispose();
+  return rt.texture;
+}
+scene.environment = buildEnvironment();
+scene.environmentIntensity = 1.0;
+
+/* ─── 灯光 ─── */
+const key = new THREE.DirectionalLight(0xfff0e0, 3.2);
+key.position.set(-38, 56, 66);
+key.castShadow = true;
+const SMAP = Math.min(LOW ? 2048 : 4096, renderer.capabilities.maxTextureSize);
+key.shadow.mapSize.set(SMAP, SMAP);
+Object.assign(key.shadow.camera, { left: -78, right: 78, top: 78, bottom: -78, near: 10, far: 320 });
+key.shadow.camera.updateProjectionMatrix();
+key.shadow.bias = -0.00012;
+key.shadow.normalBias = 0.035;
+scene.add(key, key.target);
+key.target.position.set(0, 0, 0);
+
+const rimL = new THREE.DirectionalLight(0x9cc4ff, 1.5);
+rimL.position.set(60, 28, -70);
+scene.add(rimL);
+const sweep = new THREE.SpotLight(0xfff1dc, 9000, 0, 0.34, 0.9, 2);
+sweep.position.set(30, 30, 62);
+scene.add(sweep, sweep.target);
+sweep.target.position.set(0, 0, 4);
+
+/* ════════════════════════════════════════════════════════════════════
+   程序化纹理
+   ════════════════════════════════════════════════════════════════════ */
+const MAXANI = renderer.capabilities.getMaxAnisotropy();
+function canvasTex(w, h, draw, srgb = true) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = MAXANI;
+  return t;
+}
+/** 日内瓦波纹（Côtes de Genève） */
+function genevaTex() {
+  const t = canvasTex(256, 16, (g, w, h) => {
+    for (let i = 0; i < w; i++) {
+      const u = (i / w * 5) % 1, v = Math.sin(u * PI), b = Math.floor(120 + v * 135);
+      g.fillStyle = `rgb(${b},${b},${b})`; g.fillRect(i, 0, 1, h);
+    }
+  });
+  t.repeat.set(0.42, 0.42); t.rotation = 0.62;
+  return t;
+}
+/** 珍珠纹（Perlage） */
+function perlageTex() {
+  const t = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#9a9a9a'; g.fillRect(0, 0, w, h);
+    const n = 8, s = w / n;
+    for (let j = -1; j <= n; j++) for (let i = -1; i <= n; i++) {
+      const cx = (i + (j % 2 ? .5 : 0)) * s, cy = j * s * 0.87 + s * .4;
+      const gr = g.createRadialGradient(cx - s * .12, cy - s * .12, 0, cx, cy, s * .6);
+      gr.addColorStop(0, '#ffffff'); gr.addColorStop(.55, '#b8b8b8'); gr.addColorStop(1, '#5a5a5a');
+      g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, s * .58, 0, TAU); g.fill();
+    }
+  });
+  t.repeat.set(0.2, 0.2);
+  return t;
+}
+function leatherTex() {
+  const t = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#7a7a7a'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 5200; i++) {
+      const b = 90 + Math.random() * 90 | 0, r = .8 + Math.random() * 2.2;
+      g.fillStyle = `rgba(${b},${b},${b},.5)`; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, r, 0, TAU); g.fill();
+    }
+  });
+  t.repeat.set(3, 1.4);
+  return t;
+}
+function radialTex(stops, size = 512) {
+  return canvasTex(size, size, (g, w) => {
+    const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+    stops.forEach(s => gr.addColorStop(s[0], s[1]));
+    g.fillStyle = gr; g.fillRect(0, 0, w, w);
+  });
+}
+function brandTex() {
+  return canvasTex(1024, 256, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(0,0,0,.9)'; g.shadowBlur = 14;
+    g.fillStyle = 'rgba(255,255,255,.94)';
+    g.font = '500 92px "Cormorant Garamond","Times New Roman",serif';
+    if ('letterSpacing' in g) g.letterSpacing = '26px';
+    g.fillText('AETERNA', w / 2 + 13, h * .4);
+    g.font = '400 30px "Inter","Helvetica Neue",Arial,sans-serif';
+    if ('letterSpacing' in g) g.letterSpacing = '9px';
+    g.fillStyle = 'rgba(255,255,255,.75)';
+    g.fillText('SKELETON · MANUAL WIND', w / 2 + 5, h * .78);
+  }, true);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   材质
+   ════════════════════════════════════════════════════════════════════ */
+const genevaMap = genevaTex(), perlageMap = perlageTex(), leatherMap = leatherTex();
+const M = {};
+const std = (o) => new THREE.MeshStandardMaterial(o);
+M.steel      = std({ color: 0xdfe2e7, metalness: 1, roughness: 0.16 });
+M.steelSat   = std({ color: 0xc4c8ce, metalness: 1, roughness: 0.38 });
+M.wheel      = std({ color: 0xe6e8ec, metalness: 1, roughness: 0.2 });
+M.caseP      = std({ color: 0xe3ab8a, metalness: 1, roughness: 0.16 });
+M.caseS      = std({ color: 0xe3ab8a, metalness: 1, roughness: 0.4 });
+M.bridge     = std({ color: 0xe0a98a, metalness: 1, roughness: 0.28, map: genevaMap, bumpMap: genevaMap, bumpScale: 0.6 });
+M.plate      = std({ color: 0xd9a07f, metalness: 1, roughness: 0.34, map: perlageMap, bumpMap: perlageMap, bumpScale: 0.8 });
+M.gold       = std({ color: 0xf3c08a, metalness: 1, roughness: 0.18 });
+M.balance    = std({ color: 0xeeb650, metalness: 1, roughness: 0.2 });
+M.blued      = std({ color: 0x2b58b8, metalness: 1, roughness: 0.22 });
+M.spring     = std({ color: 0x3a63b5, metalness: 1, roughness: 0.28, side: THREE.DoubleSide });
+M.hairspring = std({ color: 0xc7d3e2, metalness: 1, roughness: 0.16, side: THREE.DoubleSide });
+M.black      = std({ color: 0x08090a, metalness: 0.2, roughness: 0.7 });
+M.gasket     = std({ color: 0x15161a, metalness: 0.1, roughness: 0.75 });
+M.dial       = std({ color: 0x14171c, metalness: 0.7, roughness: 0.34 });
+M.tick       = std({ color: 0xf0f0ee, metalness: 0, roughness: 0.55 });
+M.hand       = std({ color: 0xe6b492, metalness: 1, roughness: 0.14 });
+M.secHand    = std({ color: 0xff6a2c, metalness: 0.6, roughness: 0.3 });
+M.lume       = std({ color: 0xbef5d4, emissive: 0x62ffb8, emissiveIntensity: 0.35, metalness: 0, roughness: 0.65 });
+M.leather    = std({ color: 0x2a1810, metalness: 0, roughness: 0.52, bumpMap: leatherMap, bumpScale: 1.4, side: THREE.DoubleSide });
+M.thread     = std({ color: 0xe8d6a8, metalness: 0, roughness: 0.85 });
+M.ruby       = new THREE.MeshPhysicalMaterial({ color: 0xc8102e, roughness: 0.05, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.02,
+  emissive: 0x58050f, emissiveIntensity: 0.7, ior: 1.77, specularIntensity: 1 });
+/* 蓝宝石玻璃：仅叠加“反射”（加法混合），既保持通透又有强烈的高光 */
+M.glass      = new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: 0.02, metalness: 0, ior: 1.9, specularIntensity: 1,
+  specularColor: new THREE.Color(0xd4e6ff), clearcoat: 1, clearcoatRoughness: 0, envMapIntensity: 1.4,
+  transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+M.brand      = new THREE.MeshBasicMaterial({ map: brandTex(), transparent: true, depthWrite: false, toneMapped: false, opacity: 0.92 });
+
+const THEMES = [
+  { zh:'玫瑰金', sw:'#e3ab8a', case:0xe3ab8a, bridge:0xe0a98a, plate:0xd9a07f, wheel:0xe6e8ec, accent:0xf3c08a, hand:0xe6b492, strap:0x2a1810 },
+  { zh:'钛金属', sw:'#8b9199', case:0x9ea4ac, bridge:0x555a63, plate:0x41454d, wheel:0xe2e6eb, accent:0xd0d7df, hand:0xdfe3e8, strap:0x0e0f11 },
+  { zh:'黄金',   sw:'#e6c25e', case:0xe8c25d, bridge:0xe3b950, plate:0xd3a63f, wheel:0xdfe2e6, accent:0xf6d06c, hand:0xf0cd70, strap:0x0f2340 },
+  { zh:'铂金',   sw:'#d7dce3', case:0xdadee5, bridge:0xc9ced6, plate:0xb4bac4, wheel:0xf2f4f7, accent:0xe9edf3, hand:0xe6eaf0, strap:0x14273f }
+];
+let themeIdx = 0;
+function applyTheme(i) {
+  themeIdx = i; const t = THEMES[i];
+  M.caseP.color.setHex(t.case); M.caseS.color.setHex(t.case);
+  M.bridge.color.setHex(t.bridge); M.plate.color.setHex(t.plate);
+  M.wheel.color.setHex(t.wheel); M.gold.color.setHex(t.accent);
+  M.hand.color.setHex(t.hand); M.leather.color.setHex(t.strap);
+  M.steelSat.color.setHex(i === 0 ? 0xcfc6c0 : 0xc4c8ce);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   手表本体
+   ════════════════════════════════════════════════════════════════════ */
+const turntable = new THREE.Group(); turntable.position.set(0, 0, -10);
+const root = new THREE.Group(); root.position.set(0, 0, 10);
+turntable.add(root); scene.add(turntable);
+
+const parts = {}, explodables = [], partOrder = [], pickables = [];
+function newPart(id, zc, o = {}) {
+  const g = new THREE.Group(); g.name = id;
+  if (o.pos) g.position.set(o.pos[0], o.pos[1], 0);
+  if (o.rotZ) g.rotation.z = o.rotZ;
+  root.add(g);
+  const P = { id, group: g, meshes: [], zc, dx: o.dx || 0, dy: o.dy || 0, delay: o.delay ?? 0.5, base: g.position.clone(), info: PARTS[id], owner: null, anchor: null };
+  P.owner = P;
+  parts[id] = P; explodables.push(P); partOrder.push(id);
+  g.userData.expl = P;
+  return P;
+}
+for (const id of ['jewels', 'screws']) parts[id] = { id, group: null, meshes: [], virtual: true, info: PARTS[id], owner: null, anchor: null };
+
+/* ─── 红宝石轴承 & 蓝钢螺丝 ─── */
+const jewelGeo = latheZ([[0.13, 0], [0.5, 0], [0.52, 0.08], [0.44, 0.2], [0.28, 0.27], [0.15, 0.24], [0.13, 0.16]], 28, 0.7);
+const chatonGeo = latheZ([[0.5, 0], [0.98, 0], [1.0, 0.05], [1.0, 0.22], [0.92, 0.3], [0.56, 0.3], [0.5, 0.22], [0.5, 0]], 40, 0.7);
+const screwGeo = latheZ([[0.001, 0], [0.62, 0], [0.64, 0.1], [0.56, 0.26], [0.3, 0.31], [0.001, 0.31]], 24, 0.7);
+const slotGeo = new THREE.BoxGeometry(1.05, 0.13, 0.08);
+const hexGeo = (() => { const g = new THREE.CylinderGeometry(0.62, 0.62, 0.34, 6); g.rotateX(PI / 2); g.translate(0, 0, 0.17); return g; })();
+let jewelCount = 0;
+function addJewel(parent, x, y, z, up = true, s = 1) {
+  const g = new THREE.Group(); g.position.set(x, y, z); if (!up) g.rotation.x = PI; g.scale.setScalar(s);
+  const c = shadowed(new THREE.Mesh(chatonGeo, M.gold)), r = shadowed(new THREE.Mesh(jewelGeo, M.ruby));
+  r.position.z = 0.05; c.userData.partId = 'jewels'; r.userData.partId = 'jewels';
+  g.add(c, r); parent.add(g); jewelCount++;
+  return g;
+}
+function addScrew(parent, x, y, z, ang = 0, s = 1, up = true) {
+  const g = new THREE.Group(); g.position.set(x, y, z); if (!up) g.rotation.x = PI; g.scale.setScalar(s);
+  const h = shadowed(new THREE.Mesh(screwGeo, M.blued));
+  const sl = new THREE.Mesh(slotGeo, M.black); sl.position.z = 0.31; sl.rotation.z = ang;
+  h.userData.partId = 'screws'; sl.userData.partId = 'screws'; sl.userData.noPick = true;
+  g.add(h, sl); parent.add(g);
+  return g;
+}
+function addHex(parent, x, y, z, up = true, mat = M.steelSat, ang = 0) {
+  const m = shadowed(new THREE.Mesh(hexGeo, mat)); m.position.set(x, y, z); m.rotation.z = ang; if (!up) m.rotation.x = PI;
+  parent.add(m); return m;
+}
+
+/* ─── 机芯关键坐标（mm）：所有啮合中心距 = 节圆半径之和 ─── */
+const C = [0, 0];
+const B = pol(8.75, 150);                  // 发条盒 (7.0) + 中心小齿轮 (1.75)
+const T = pol(7.25, 20);                   // 中心轮 (6.0) + 三轮小齿轮 (1.25)
+const F = addv(T, pol(5.75, -50));         // 三轮 (4.5) + 四轮小齿轮 (1.25)
+const E = addv(F, pol(4.75, -110));        // 四轮 (3.75) + 擒纵小齿轮 (1.0)
+const L = [0, -9.8];                       // 摆轮
+const dEL = Math.hypot(L[0] - E[0], L[1] - E[1]);
+const uEL = [(L[0] - E[0]) / dEL, (L[1] - E[1]) / dEL];
+const dEP = 3.7;
+const Pv = [E[0] + uEL[0] * dEP, E[1] + uEL[1] * dEP];      // 擒纵叉枢轴
+const Lb = dEL - dEP;                                       // 叉枢轴到摆轮中心
+const BASE = Math.atan2(uEL[1], uEL[0]);                    // 擒纵叉局部 +x 指向摆轮
+const FT1 = pol(14.9, 170), FT2 = pol(14.9, 114), FT3 = pol(14.9, -16), FT4 = pol(14.9, -58), FT5 = pol(15.0, -158), FT6 = pol(14.9, 12);
+const LV1 = [0.75, 1.25], LV2 = [1.75, 2.25];
+const ZB0 = 4.1, ZB1 = 4.8, ZBOSS = 4.95;   // 夹板层
+
+/* ═════ 主夹板 ═════ */
+{
+  const P = newPart('mainplate', -0.6, { delay: 0.75 });
+  const g = P.group;
+  g.add(mkExtrude(circlePts(17.4, 128), [circlePts(15.9, 128)], -1.2, -0.1, M.plate, 0.05));
+  const net = [[B, C, -0.08], [C, T, 0.08], [T, F, -0.08], [F, E, 0.06], [E, Pv, 0], [Pv, L, 0.05], [L, C, 0],
+    [B, FT1, 0.05], [B, FT2, -0.05], [F, FT3, 0], [E, FT4, 0], [T, FT6, 0], [L, FT5, 0.04]];
+  for (const [a, b, bl] of net) g.add(mkExtrude(armOutline(bez(a, b, bl), 0.85, 0.85), null, -1.2, 0, M.plate, 0.05));
+  for (const p of [B, C, T, F, E, Pv, L]) {
+    g.add(mkExtrude(circlePts(1.9, 40, p[0], p[1]), null, -1.2, 0.08, M.plate, 0.05));
+    addJewel(g, p[0], p[1], -1.2, false, 1.0);
+  }
+  for (const p of [FT1, FT2, FT3, FT4, FT5, FT6]) g.add(mkExtrude(circlePts(1.25, 32, p[0], p[1]), null, -1.2, 0.08, M.plate, 0.05));
+}
+
+/* ═════ 发条盒 ═════ */
+function spiralRibbon(r0, r1, turns, z0, z1, thick, seg = 56) {
+  const n = Math.floor(turns * seg), pos = [], nor = [], idx = [];
+  const rows = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, a = t * turns * TAU, r = r0 + (r1 - r0) * t, c = Math.cos(a), s = Math.sin(a);
+    rows.push([r * c, r * s, (r + thick) * c, (r + thick) * s, c, s]);
+  }
+  const strip = (fn) => {
+    const base = pos.length / 3;
+    for (const row of rows) { const [v0, v1] = fn(row); pos.push(...v0.p, ...v1.p); nor.push(...v0.n, ...v1.n); }
+    for (let i = 0; i < n; i++) { const a = base + i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  };
+  strip(r => [{ p: [r[0], r[1], z1], n: [0, 0, 1] }, { p: [r[2], r[3], z1], n: [0, 0, 1] }]);
+  strip(r => [{ p: [r[0], r[1], z0], n: [0, 0, -1] }, { p: [r[2], r[3], z0], n: [0, 0, -1] }]);
+  strip(r => [{ p: [r[2], r[3], z0], n: [r[4], r[5], 0] }, { p: [r[2], r[3], z1], n: [r[4], r[5], 0] }]);
+  strip(r => [{ p: [r[0], r[1], z0], n: [-r[4], -r[5], 0] }, { p: [r[0], r[1], z1], n: [-r[4], -r[5], 0] }]);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setIndex(idx);
+  return geo;
+}
+const stageSpin = {};   // id -> 旋转组
+{
+  const P = newPart('barrel', 0.9, { pos: B, delay: 0.4 });
+  const sp = new THREE.Group(); P.group.add(sp); stageSpin.barrel = sp;
+  sp.add(makeGear(56, 0.25, 1.6, M.gold, { hole: 6.25, bevel: 0.04 }));
+  sp.add(mkExtrude(circlePts(6.32, 96), [circlePts(1.05, 32)], 0.2, 0.45, M.steelSat, 0.03));
+  sp.add(shadowed(new THREE.Mesh(spiralRibbon(1.45, 5.95, 13.2, 0.5, 1.4, 0.12), M.spring)));
+  sp.add(cylZ(1.05, 0.2, 1.7, M.steel, 32));
+}
+
+/* ═════ 传动轮系：以擒纵轮为起点，依据齿数比逐级推算 ═════ */
+const DELTA = 0.314159265;   // 叉瓦半跨角 18°（= 0.75 个齿距，对应 15 齿擒纵轮）
+const phCP = meshPhase(B, 56, 0, C, 14);
+const phCW = 0.3;
+const phTP = meshPhase(C, 48, phCW, T, 10);
+const phFP = meshPhase(T, 36, 0, F, 10);
+const phEP = meshPhase(F, 30, 0, E, 8);
+const phEW = BASE - DELTA - 0.05 + 0.24 * (TAU / 15);
+
+function stage(id, pos, zc, delay) {
+  const P = newPart(id, zc, { pos, delay });
+  const sp = new THREE.Group(); P.group.add(sp); stageSpin[id] = sp;
+  return { P, sp };
+}
+{ // 中心轮
+  const { sp } = stage('center', C, 1.5, 0.45);
+  sp.add(makeGear(14, LV1[0], LV1[1], M.steel, { phase: phCP, hole: 0.3 }));
+  sp.add(cylZ(1.0, LV1[1], LV2[0], M.steel));
+  sp.add(makeGear(48, LV2[0], LV2[1], M.wheel, { phase: phCW, hole: 0.3, win: { n: 5, hub: 1.5, rim: 5.25, sw: 0.5, rot: 0.3 } }));
+  sp.add(cylZ(1.2, LV2[1], 2.6, M.steel));
+  sp.add(cylZ(0.4, -0.3, ZBOSS, M.steel));
+}
+{ // 三轮
+  const { sp } = stage('third', T, 1.5, 0.45);
+  sp.add(makeGear(36, LV1[0], LV1[1], M.wheel, { hole: 0.3, win: { n: 4, hub: 1.1, rim: 3.8, sw: 0.45, rot: 0.5 } }));
+  sp.add(cylZ(0.8, LV1[1], LV2[0], M.steel));
+  sp.add(makeGear(10, LV2[0], LV2[1], M.steel, { phase: phTP, hole: 0.25 }));
+  sp.add(cylZ(0.35, -0.3, ZBOSS, M.steel));
+}
+{ // 四轮（秒轮）
+  const { sp } = stage('fourth', F, 1.5, 0.45);
+  sp.add(makeGear(10, LV1[0], LV1[1], M.steel, { phase: phFP, hole: 0.25 }));
+  sp.add(cylZ(0.8, LV1[1], LV2[0], M.steel));
+  sp.add(makeGear(30, LV2[0], LV2[1], M.wheel, { hole: 0.3, win: { n: 3, hub: 1.05, rim: 3.05, sw: 0.42, rot: 0.9 } }));
+  sp.add(cylZ(0.33, -0.3, ZBOSS, M.steel));
+}
+{ // 擒纵轮
+  const { sp } = stage('escape', E, 1.5, 0.45);
+  const D = TAU / 15, ep = [];
+  for (let i = 0; i < 15; i++) for (const [af, r] of [[-.45, 1.95], [-.30, 2.6], [-.24, 2.6], [.05, 1.95]]) { const a = (i + af) * D; ep.push([r * Math.cos(a), r * Math.sin(a)]); }
+  const holes = [circlePts(0.3, 20)];
+  for (let k = 0; k < 5; k++) holes.push(windowPts(5, k, 0.7, 1.55, 0.32, 0.2));
+  const w = mkExtrude(ep, holes, LV1[0], LV1[1], M.steel, 0.03); w.rotation.z = phEW; sp.add(w);
+  sp.add(cylZ(0.7, LV1[1], LV2[0], M.steel));
+  sp.add(makeGear(8, LV2[0], LV2[1], M.steel, { phase: phEP, hole: 0.22 }));
+  sp.add(cylZ(0.3, -0.3, ZBOSS, M.steel));
+}
+
+/* ═════ 擒纵叉 ═════ */
+let forkSpin;
+{
+  const P = newPart('pallet', 1.0, { pos: Pv, delay: 0.45 });
+  P.group.rotation.z = BASE;
+  forkSpin = new THREE.Group(); P.group.add(forkSpin);
+  const lev = [[0.9, -0.28], [2.6, -0.30], [Lb - 2.0, -0.55], [Lb - 1.15, -0.6], [Lb - 1.05, -0.32], [Lb - 2.05, -0.27],
+    [Lb - 2.05, 0.27], [Lb - 1.05, 0.32], [Lb - 1.15, 0.6], [Lb - 2.0, 0.55], [2.6, 0.30], [0.9, 0.28],
+    [0.5, 0.62], [-0.7, 1.2], [-1.45, 1.15], [-1.5, 0.55], [-0.9, 0.4], [-0.4, 0.15],
+    [-0.4, -0.15], [-0.9, -0.4], [-1.5, -0.55], [-1.45, -1.15], [-0.7, -1.2], [0.5, -0.62]];
+  forkSpin.add(mkExtrude(lev, null, 0.85, 1.15, M.steel, 0.03));
+  forkSpin.add(cylZ(0.75, 0.6, 1.4, M.steel, 32));
+  forkSpin.add(cylZ(0.3, -0.3, ZBOSS, M.steel));
+  const sg = new THREE.BoxGeometry(0.55, 0.34, 0.6);
+  for (const s of [1, -1]) {
+    const st = shadowed(new THREE.Mesh(sg, M.ruby)); st.position.set(-dEP + 2.55 * Math.cos(DELTA) - 0.05, s * 2.55 * Math.sin(DELTA), 1.0);
+    st.rotation.z = s * DELTA * 0.6; st.userData.partId = 'jewels'; forkSpin.add(st); jewelCount++;
+  }
+  for (const s of [1, -1]) { const pin = cylZ(0.15, 0.6, 1.5, M.steel, 12); pin.position.set(2.9, s * 0.72, 0); P.group.add(pin); }
+}
+
+/* ═════ 摆轮 & 游丝 ═════ */
+let balSpin, hairMesh, hairUpdate, hairCollet;
+const STUD_ANG = Math.atan2(FT5[1] - L[1], FT5[0] - L[0]);
+{
+  const P = newPart('balance', 3.0, { pos: L, delay: 0.3 });
+  balSpin = new THREE.Group(); P.group.add(balSpin);
+  const holes = [circlePts(0.3, 20)];
+  for (let k = 0; k < 3; k++) holes.push(windowPts(3, k, 1.05, 4.95, 0.55, 0.5));
+  balSpin.add(mkExtrude(circlePts(5.4, 120), holes, 2.75, 3.25, M.balance, 0.04));
+  balSpin.add(cylZ(1.0, 2.6, 3.4, M.steel, 32));
+  balSpin.add(cylZ(0.28, -0.3, ZBOSS, M.steel));
+  balSpin.add(cylZ(1.3, 0.5, 0.8, M.steel, 40));
+  for (let i = 0; i < 16; i++) {
+    const a = i * TAU / 16, big = i % 4 === 0, r = big ? 0.3 : 0.17;
+    const s = cylZ(r, 3.25, big ? 3.55 : 3.47, M.gold, 16); s.position.set(5.17 * Math.cos(a), 5.17 * Math.sin(a), 0); balSpin.add(s);
+  }
+  const pa = BASE + PI, pin = cylZ(0.22, 0.8, 1.4, M.ruby, 16);
+  pin.position.set(Math.cos(pa), Math.sin(pa), 0); pin.userData.partId = 'jewels'; balSpin.add(pin); jewelCount++;
+
+  // 游丝：随摆轮“呼吸”的动态几何（矩形截面阿基米德螺旋）
+  const H = newPart('hairspring', 3.6, { pos: L, delay: 0.25 });
+  const turns = 11.5, r0 = 0.7, r1 = 3.05, N = Math.floor(turns * 44), ZH = 3.6, HW = 0.055, HH = 0.09, A0 = STUD_ANG - PI;
+  const posA = new Float32Array((N + 1) * 4 * 3), norA = new Float32Array((N + 1) * 4 * 3), idx = [];
+  for (let i = 0; i < N; i++) for (let k = 0; k < 4; k++) {
+    const a = i * 4 + k, b = i * 4 + (k + 1) % 4, c = (i + 1) * 4 + k, d = (i + 1) * 4 + (k + 1) % 4;
+    idx.push(a, b, c, b, d, c);
+  }
+  const SX = [-1, 1, 1, -1], SZ = [-1, -1, 1, 1];
+  hairUpdate = (theta) => {
+    const t = theta / 4.6;
+    for (let i = 0; i <= N; i++) {
+      const s = i / N, a = A0 + s * turns * TAU + theta * (1 - s), r = (r0 + (r1 - r0) * s) * (1 - 0.055 * t * (1 - s));
+      const c = Math.cos(a), sn = Math.sin(a);
+      for (let k = 0; k < 4; k++) {
+        const o = (i * 4 + k) * 3, rr = r + SX[k] * HW;
+        posA[o] = rr * c; posA[o + 1] = rr * sn; posA[o + 2] = ZH + SZ[k] * HH;
+        norA[o] = SX[k] * c * 0.7; norA[o + 1] = SX[k] * sn * 0.7; norA[o + 2] = SZ[k] * 0.7;
+      }
+    }
+    hairMesh.geometry.attributes.position.needsUpdate = true;
+    hairMesh.geometry.attributes.normal.needsUpdate = true;
+  };
+  const hg = new THREE.BufferGeometry();
+  hg.setAttribute('position', new THREE.BufferAttribute(posA, 3));
+  hg.setAttribute('normal', new THREE.BufferAttribute(norA, 3));
+  hg.setIndex(idx);
+  hairMesh = shadowed(new THREE.Mesh(hg, M.hairspring)); hairMesh.frustumCulled = false;
+  H.group.add(hairMesh);
+  hairCollet = mkExtrude(circlePts(0.72, 28), [circlePts(0.3, 16)], ZH - 0.1, ZH + 0.16, M.gold, 0.02);
+  H.group.add(hairCollet);
+  const stud = cylZ(0.24, ZH - 0.1, ZB0 + 0.05, M.steel, 14);
+  stud.position.set(r1 * Math.cos(STUD_ANG), r1 * Math.sin(STUD_ANG), 0); H.group.add(stud);
+  hairUpdate(0);
+}
+
+/* ═════ 夹板层 ═════ */
+function bridgeArm(P, a, b, bl, w0, w1) {
+  P.group.add(mkExtrude(armOutline(bez(a, b, bl), w0, w1), null, ZB0, ZB1, M.bridge, 0.05));
+}
+function boss(P, p, r) { P.group.add(mkExtrude(circlePts(r, 44, p[0], p[1]), null, ZB0, ZBOSS, M.bridge, 0.05)); }
+{
+  const P = newPart('bridge_barrel', 4.45, { delay: 0.1 });
+  bridgeArm(P, B, FT1, 0.05, 1.15, 0.95); bridgeArm(P, B, FT2, -0.05, 1.15, 0.95); boss(P, B, 1.75);
+  addScrew(P.group, FT1[0], FT1[1], ZB1, 0.6); addScrew(P.group, FT2[0], FT2[1], ZB1, 2.2);
+}
+{
+  const P = newPart('bridge_train', 4.45, { delay: 0.1 });
+  bridgeArm(P, B, C, -0.08, 1.0, 1.15); bridgeArm(P, C, T, 0.08, 1.15, 1.0); bridgeArm(P, T, F, -0.08, 1.0, 1.0);
+  boss(P, C, 2.1); boss(P, T, 1.5); boss(P, F, 1.5);
+  const ring = shadowed(new THREE.Mesh(chatonGeo, M.gold)); ring.scale.setScalar(1.95); ring.position.set(0, 0, ZBOSS); P.group.add(ring);
+  addJewel(P.group, T[0], T[1], ZBOSS); addJewel(P.group, F[0], F[1], ZBOSS);
+  const m1 = bez(B, C, -0.08)[7], m2 = bez(T, F, -0.08)[9];
+  addScrew(P.group, m1[0], m1[1], ZB1, 1.1); addScrew(P.group, m2[0], m2[1], ZB1, 0.3);
+}
+{
+  const P = newPart('bridge_escape', 4.45, { delay: 0.1 });
+  bridgeArm(P, F, E, 0.06, 1.0, 1.05); bridgeArm(P, E, Pv, 0, 1.05, 1.0); bridgeArm(P, F, FT3, 0, 1.0, 0.95); bridgeArm(P, E, FT4, 0, 1.05, 0.95);
+  boss(P, E, 1.5); boss(P, Pv, 1.5);
+  addJewel(P.group, E[0], E[1], ZBOSS); addJewel(P.group, Pv[0], Pv[1], ZBOSS);
+  addScrew(P.group, FT3[0], FT3[1], ZB1, 0.4); addScrew(P.group, FT4[0], FT4[1], ZB1, 1.9);
+}
+{
+  const P = newPart('cock', 4.45, { delay: 0.1 });
+  bridgeArm(P, L, FT5, 0.04, 1.2, 0.9); boss(P, L, 1.75);
+  addJewel(P.group, L[0], L[1], ZBOSS, true, 1.0);
+  const cap = shadowed(new THREE.Mesh(jewelGeo, M.ruby)); cap.scale.setScalar(0.5); cap.position.set(L[0], L[1], ZBOSS + 0.3); cap.userData.partId = 'jewels'; P.group.add(cap); jewelCount++;
+  addScrew(P.group, FT5[0], FT5[1], ZB1, 0.9);
+  // 微调指针（regulator index）：从夹板中心伸向轮缘的一根细指针
+  P.group.add(mkExtrude(armOutline([[L[0] + 1.2, L[1] - 0.1], [L[0] + 4.1, L[1] + 0.6]], 0.34, 0.2), null, ZB1 - 0.35, ZB1, M.steelSat, 0.03));
+}
+
+/* ═════ 棘轮 & 棘爪 ═════ */
+let ratchetSpin;
+{
+  const P = newPart('ratchet', 5.2, { pos: B, delay: 0.05 });
+  ratchetSpin = new THREE.Group(); P.group.add(ratchetSpin);
+  P.group.add(cylZ(0.5, -0.3, 5.6, M.steel, 20));
+  const N = 28, rr = 2.15, ro = 2.65, D = TAU / N, pts = [];
+  for (let i = 0; i < N; i++) for (const [af, r] of [[-.48, rr], [-.02, ro], [.02, ro], [.06, rr]]) { const a = (i + af) * D; pts.push([r * Math.cos(a), r * Math.sin(a)]); }
+  const holes = [circlePts(0.5, 20)];
+  for (let k = 0; k < 4; k++) holes.push(windowPts(4, k, 1.0, 1.8, 0.45, 0.4));
+  ratchetSpin.add(mkExtrude(pts, holes, ZBOSS, 5.45, M.steel, 0.04));
+  addScrew(ratchetSpin, 0, 0, 5.45, 0.5, 1.7);
+  const pc = pol(2.95, 62), tip = pol(2.45, 38);
+  P.group.add(mkExtrude(armOutline([pc, tip], 0.3, 0.1), null, ZBOSS, 5.35, M.steelSat, 0.03));
+  P.group.add(mkExtrude(armOutline(bez(pc, pol(3.9, 20), 0.3, 8), 0.07, 0.05), null, ZBOSS, 5.15, M.steelSat, 0.02));
+  addScrew(P.group, pc[0], pc[1], 5.35, 1.0, 0.7);
+}
+
+/* ═════ 指针 ═════ */
+const handParts = {};
+function handBody(P, outline, win, z0, z1, mat) {
+  P.group.add(mkExtrude(outline, win ? [win] : null, z0, z1, mat, 0.03));
+  if (win) P.group.add(mkExtrude(win, null, z0 + 0.03, z1 + 0.03, M.lume, 0.02));
+}
+{
+  const P = newPart('hand_h', 6.95, { delay: 0.85 }); handParts.h = P;
+  const out = [[0, -2.9], [0.55, -2.4], [1.0, -1.5], [1.15, 0.6], [1.0, 5.6], [0.6, 8.4], [0, 10.2], [-0.6, 8.4], [-1.0, 5.6], [-1.15, 0.6], [-1.0, -1.5], [-0.55, -2.4]];
+  const win = [[-0.62, 0.3], [0.62, 0.3], [0.55, 5.2], [0.22, 7.7], [0, 8.6], [-0.22, 7.7], [-0.55, 5.2]];
+  handBody(P, out, win, 6.85, 7.1, M.hand);
+  P.group.add(cylZ(1.25, ZBOSS, 6.85, M.steel, 32)); P.group.add(cylZ(1.38, 6.85, 7.1, M.hand, 36));
+}
+{
+  const P = newPart('hand_m', 7.4, { delay: 0.9 }); handParts.m = P;
+  const out = [[0, -3.4], [0.5, -2.8], [0.9, -1.7], [1.0, 0.8], [0.8, 8], [0.55, 13.5], [0, 16.6], [-0.55, 13.5], [-0.8, 8], [-1.0, 0.8], [-0.9, -1.7], [-0.5, -2.8]];
+  const win = [[-0.45, 0.9], [0.45, 0.9], [0.33, 10.5], [0, 14.6], [-0.33, 10.5]];
+  handBody(P, out, win, 7.25, 7.5, M.hand);
+  P.group.add(cylZ(0.8, ZBOSS, 7.25, M.steel, 28)); P.group.add(cylZ(0.98, 7.25, 7.5, M.hand, 32));
+}
+{
+  const P = newPart('hand_s', 7.9, { delay: 0.95 }); handParts.s = P;
+  const out = [[0, -6.0], [0.3, -5.6], [0.3, -4.2], [0.11, -3.2], [0.11, 17.6], [0, 18.4], [-0.11, 17.6], [-0.11, -3.2], [-0.3, -4.2], [-0.3, -5.6]];
+  P.group.add(mkExtrude(out, null, 7.65, 7.9, M.secHand, 0.02));
+  P.group.add(mkExtrude(circlePts(0.85, 32, 0, -4.6), [circlePts(0.42, 20, 0, -4.6)], 7.65, 7.9, M.secHand, 0.02));
+  const d1 = cylZ(0.4, 7.68, 7.94, M.lume, 20); d1.position.set(0, -4.6, 0); P.group.add(d1);
+  const d2 = cylZ(0.3, 7.68, 7.94, M.lume, 16); d2.position.set(0, 14.2, 0); P.group.add(d2);
+  P.group.add(cylZ(0.3, ZBOSS, 7.65, M.steel, 12)); P.group.add(cylZ(0.55, 7.65, 7.9, M.secHand, 24)); P.group.add(cylZ(0.34, 7.9, 8.2, M.gold, 16));
+}
+
+/* ═════ 刻度圈与夜光时标 ═════ */
+{
+  const P = newPart('dial', 4.8, { delay: 0.7 });
+  P.group.add(mkExtrude(circlePts(18.35, 160), [circlePts(16.0, 160)], 4.3, 5.3, M.dial, 0.05));
+  const dm = new THREE.Object3D();
+  const tickG = new THREE.BoxGeometry(0.13, 0.66, 0.08);
+  const ticks = new THREE.InstancedMesh(tickG, M.tick, 48);
+  let n = 0;
+  for (let i = 0; i < 60; i++) {
+    if (i % 5 === 0) continue;
+    const a = i * TAU / 60;
+    dm.position.set(17.75 * Math.sin(a), 17.75 * Math.cos(a), 5.34); dm.rotation.set(0, 0, -a); dm.scale.set(1, 1, 1); dm.updateMatrix();
+    ticks.setMatrixAt(n++, dm.matrix);
+  }
+  ticks.castShadow = true; P.group.add(ticks);
+  const inst = []; // [角度, 侧向偏移, 宽缩放, 长缩放]
+  for (let h = 0; h < 12; h++) {
+    if (h === 0) { inst.push([0, -0.8, 0.62, 1.0], [0, 0.8, 0.62, 1.0]); continue; }
+    inst.push([h * TAU / 12, 0, 1, h % 3 === 0 ? 1.0 : 0.9]);
+  }
+  const frame = new THREE.InstancedMesh(new THREE.BoxGeometry(1.05, 1.9, 0.3), M.steel, inst.length);
+  const lume = new THREE.InstancedMesh(new THREE.BoxGeometry(0.66, 1.55, 0.34), M.lume, inst.length);
+  inst.forEach(([a, off, sw, sl], i) => {
+    const r = 17.05, ca = Math.cos(a), sa = Math.sin(a);
+    dm.position.set(r * sa + off * ca, r * ca - off * sa, 5.45); dm.rotation.set(0, 0, -a); dm.scale.set(sw, sl, 1); dm.updateMatrix();
+    frame.setMatrixAt(i, dm.matrix);
+    dm.position.z = 5.47; dm.updateMatrix(); lume.setMatrixAt(i, dm.matrix);
+  });
+  frame.castShadow = lume.castShadow = true; P.group.add(frame, lume);
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), M.brand);
+  decal.position.set(0, 11.9, 6.4); decal.userData.noPick = true; decal.renderOrder = 5; P.group.add(decal);
+}
+
+/* ═════ 表壳 ═════ */
+const CASE_ZC = -3.6;
+{
+  const P = newPart('case', CASE_ZC, { delay: 0.95 });
+  const mid = shadowed(new THREE.Mesh(latheZ([[19.35, -4.4], [19.85, -4.0], [20.0, -3.3], [20.0, 6.3], [19.85, 7.0], [19.4, 7.5], [18.2, 7.5], [18.2, -4.4], [19.35, -4.4]], 160, 0.5), M.caseS));
+  P.group.add(mid);
+  // 中框上下抛光斜边
+  P.group.add(shadowed(new THREE.Mesh(latheZ([[19.32, -4.42], [19.88, -3.98], [19.97, -3.6], [19.6, -3.6], [19.3, -4.0], [19.32, -4.42]], 160, 0.6), M.caseP)));
+  P.group.add(shadowed(new THREE.Mesh(latheZ([[19.93, 6.5], [19.87, 6.98], [19.42, 7.48], [19.1, 7.4], [19.6, 6.9], [19.6, 6.5], [19.93, 6.5]], 160, 0.6), M.caseP)));
+  // 表耳
+  const lugShape = shapeFromPts([[15.6, -4.35], [19.5, -4.6], [22.8, -4.0], [24.8, -2.8], [25.8, -1.2], [25.7, 0.3], [24.6, 1.6], [22.4, 3.5], [19.6, 5.4], [16.8, 6.3], [15.6, 6.3]]);
+  const bv = 0.3, lw = 3.8;
+  const lg = new THREE.ExtrudeGeometry(lugShape, { depth: lw - 2 * bv, bevelEnabled: true, bevelThickness: bv, bevelSize: bv, bevelSegments: 3, curveSegments: 1 });
+  lg.translate(0, 0, bv);
+  lg.applyMatrix4(new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1));
+  const lugTR = lg.clone(); lugTR.translate(9.0, 0, 0);
+  const lugTL = lg.clone(); lugTL.translate(-12.8, 0, 0);
+  const lugBL = lugTR.clone(); lugBL.rotateZ(PI);
+  const lugBR = lugTL.clone(); lugBR.rotateZ(PI);
+  for (const g of [lugTR, lugTL, lugBL, lugBR]) P.group.add(shadowed(new THREE.Mesh(toCreasedNormals(g, 0.7), M.caseP)));
+  for (const s of [1, -1]) {
+    const bar = cylZ(0.55, -9.4, 9.4, M.steel, 16);   // 沿 Z 建模，再转到 X 轴
+    bar.geometry.rotateY(PI / 2); bar.position.set(0, s * 23.6, -1.4); P.group.add(bar);
+  }
+}
+/* ═════ 表圈 ═════ */
+{
+  const P = newPart('bezel', 8.4, { delay: 0.98 });
+  P.group.add(shadowed(new THREE.Mesh(latheZ([[20.35, 7.35], [20.5, 7.7], [20.5, 8.7], [20.1, 9.25], [19.2, 9.45], [18.6, 9.3], [18.35, 8.9], [18.3, 8.3], [18.3, 7.35], [20.35, 7.35]], 160, 0.5), M.caseP)));
+  for (let i = 0; i < 8; i++) { const a = i * TAU / 8 + TAU / 16; addHex(P.group, 19.55 * Math.cos(a), 19.55 * Math.sin(a), 9.3, true, M.steelSat, a); }
+}
+/* ═════ 蓝宝石水晶 ═════ */
+{
+  const P = newPart('crystal', 9.6, { delay: 1.0 });
+  const Rs = 63.4, thMax = Math.asin(18.3 / Rs);
+  const cg = new THREE.SphereGeometry(Rs, 128, 24, 0, TAU, 0, thMax);
+  cg.rotateX(PI / 2); cg.translate(0, 0, 11.3 - Rs);
+  const cap = new THREE.Mesh(cg, M.glass); cap.userData.noPick = true; cap.renderOrder = 10; P.group.add(cap);
+  P.group.add(shadowed(new THREE.Mesh(latheZ([[18.3, 7.6], [18.3, 8.5], [17.9, 8.5], [17.9, 7.6], [18.3, 7.6]], 120, 0.5), M.gasket), false, true));
+}
+/* ═════ 表冠 ═════ */
+let crownSpin;
+{
+  const P = newPart('crown', CASE_ZC, { dx: 10, delay: 0.95 });
+  crownSpin = new THREE.Group(); crownSpin.position.z = 1.5; P.group.add(crownSpin);   // 绕表柄轴（X）旋转
+  const pts = [];
+  for (let k = 0; k < 220; k++) { const a = k / 220 * TAU, r = 2.6 - 0.2 * (0.5 + 0.5 * Math.cos(a * 22)); pts.push([r * Math.cos(a), r * Math.sin(a)]); }
+  const cg = new THREE.ExtrudeGeometry(shapeFromPts(pts), { depth: 3.0, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.15, bevelSegments: 2, curveSegments: 1 });
+  cg.translate(0, 0, 0.2); cg.rotateY(PI / 2); cg.translate(19.7, 0, 0);
+  crownSpin.add(shadowed(new THREE.Mesh(cg, M.caseP)));
+  const alongX = (r, x0, x1, mat, seg) => { const m = cylZ(r, x0, x1, mat, seg); m.geometry.rotateY(PI / 2); return m; };
+  crownSpin.add(alongX(1.05, 17.4, 19.8, M.steel, 20));
+  crownSpin.add(alongX(1.55, 22.9, 23.15, M.gold, 32));
+  const tb = alongX(2.1, 19.4, 20.6, M.caseS, 32); tb.position.z = 1.5; P.group.add(tb);
+}
+/* ═════ 底盖 ═════ */
+{
+  const P = newPart('caseback', -5.4, { delay: 0.98 });
+  P.group.add(shadowed(new THREE.Mesh(latheZ([[19.5, -6.2], [19.95, -5.8], [19.95, -4.3], [16.5, -4.3], [16.5, -5.7], [16.85, -6.2], [19.5, -6.2]], 160, 0.5), M.caseP)));
+  const gl = new THREE.Mesh(new THREE.CircleGeometry(16.55, 96), M.glass); gl.position.z = -5.1; gl.rotation.x = PI; gl.userData.noPick = true; gl.renderOrder = 10; P.group.add(gl);
+  for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + 0.3; addHex(P.group, 18.2 * Math.cos(a), 18.2 * Math.sin(a), -6.2, false, M.steelSat, a); }
+}
+
+/* ═════ 表带（扫掠成环形，带压纹皮革、缝线、针扣）═════ */
+const strapMats = [M.leather, M.thread];
+let strapCurve;
+{
+  const P = newPart('strap', CASE_ZC, { delay: 0.95 });
+  const H = [[23.4, -1.4], [27.8, -2.6], [32.0, -7.0], [33.8, -15.5], [32.8, -26.5], [27.5, -37.5], [17, -45], [0, -47.5]];
+  const loop = H.map(p => new THREE.Vector3(0, p[0], p[1]));
+  for (let i = H.length - 2; i >= 0; i--) loop.push(new THREE.Vector3(0, -H[i][0], H[i][1]));
+  strapCurve = new THREE.CatmullRomCurve3(loop, false, 'centripetal');
+  const NS = 260, hw = 8.9, ht = 1.15, rc = 0.7;
+  const sec = [];
+  const corners = [[hw - rc, -(ht - rc), -PI / 2], [hw - rc, ht - rc, 0], [-(hw - rc), ht - rc, PI / 2], [-(hw - rc), -(ht - rc), PI]];
+  for (const [cx, cy, a0] of corners) for (let k = 0; k <= 4; k++) { const a = a0 + k / 4 * PI / 2; sec.push([cx + rc * Math.cos(a), cy + rc * Math.sin(a)]); }
+  const SM = sec.length, pos = [], uv = [], idx = [], side = new THREE.Vector3(1, 0, 0);
+  const len = strapCurve.getLength();
+  for (let i = 0; i <= NS; i++) {
+    const u = i / NS, p = strapCurve.getPointAt(u), t = strapCurve.getTangentAt(u).normalize();
+    const nrm = new THREE.Vector3().crossVectors(side, t).normalize();
+    for (let j = 0; j < SM; j++) {
+      const q = p.clone().addScaledVector(side, sec[j][0]).addScaledVector(nrm, sec[j][1]);
+      pos.push(q.x, q.y, q.z); uv.push(u * len / 12, j / SM * 2);
+    }
+  }
+  for (let i = 0; i < NS; i++) for (let j = 0; j < SM; j++) {
+    const a = i * SM + j, b = i * SM + (j + 1) % SM, c = (i + 1) * SM + j, d = (i + 1) * SM + (j + 1) % SM;
+    idx.push(a, c, b, b, c, d);
+  }
+  const sg = new THREE.BufferGeometry();
+  sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  sg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  sg.setIndex(idx); sg.computeVertexNormals();
+  P.group.add(shadowed(new THREE.Mesh(sg, M.leather)));
+  // 缝线
+  const step = 1.7, cnt = Math.floor(len / step), dm = new THREE.Object3D();
+  const th = new THREE.InstancedMesh(new THREE.BoxGeometry(0.16, 1.0, 0.16), M.thread, cnt * 2);
+  let k = 0;
+  const basis = new THREE.Matrix4();
+  for (let i = 0; i < cnt; i++) {
+    const u = (i + 0.5) / cnt, p = strapCurve.getPointAt(u), t = strapCurve.getTangentAt(u).normalize();
+    const nrm = new THREE.Vector3().crossVectors(side, t).normalize();
+    basis.makeBasis(side, t, nrm);   // 右手系 (x=侧向, y=切线, z=法线)，盒子长边沿 y
+    for (const s of [-1, 1]) {
+      const q = p.clone().addScaledVector(side, s * (hw - 1.5)).addScaledVector(nrm, ht + 0.02);
+      dm.position.copy(q); dm.quaternion.setFromRotationMatrix(basis); dm.scale.set(1, 1, 1); dm.updateMatrix();
+      th.setMatrixAt(k++, dm.matrix);
+    }
+  }
+  th.count = k; th.castShadow = true; P.group.add(th);
+  // 针扣
+  const rrect = (hw, hh, r) => {
+    const o = [];
+    for (const [cx, cy, a0] of [[hw - r, -(hh - r), -PI / 2], [hw - r, hh - r, 0], [-(hw - r), hh - r, PI / 2], [-(hw - r), -(hh - r), PI]])
+      for (let q = 0; q <= 5; q++) { const a = a0 + q / 5 * PI / 2; o.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+    return o;
+  };
+  P.group.add(mkExtrude(rrect(10.6, 5.6, 2.2), [rrect(8.4, 3.4, 1.2)], -49.9, -48.5, M.caseP, 0.3));
+  const tg = cylZ(0.42, -4.6, 4.6, M.steel, 12); tg.geometry.rotateX(-PI / 2); tg.position.set(0, 0, -49.2);   // 针扣舌沿 Y
+  P.group.add(tg);
+}
+
+/* ═════ 爆炸视图辅助线：穿过各轴心 ═════ */
+const guides = (() => {
+  const v = [];
+  for (const p of [C, B, T, F, E, Pv, L]) v.push(p[0], p[1], -75, p[0], p[1], 70);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+  const m = new THREE.LineSegments(g, new THREE.LineDashedMaterial({ color: 0xd9bb8c, dashSize: 1.4, gapSize: 1.1, transparent: true, opacity: 0, depthWrite: false }));
+  m.computeLineDistances(); m.visible = false; root.add(m); return m;
+})();
+
+/* ═════ 汇总：网格归属、拾取列表、标签锚点 ═════ */
+function ownerOf(o) { while (o && !o.userData.expl) o = o.parent; return o ? o.userData.expl : null; }
+function sealParts() {
+  root.updateMatrixWorld(true);
+  for (const id of partOrder) {
+    const P = parts[id];
+    P.group.traverse(o => {
+      if (!o.isMesh) return;
+      const pid = o.userData.partId || id; o.userData.partId = pid;
+      parts[pid].meshes.push(o);
+      if (!o.userData.noPick) pickables.push(o);
+    });
+  }
+  const ANCHOR = {
+    crystal: [8, 13.2, 10.4], bezel: [-14.4, 14.4, 9.3], hand_h: [0, 0, 7.0], hand_m: [0, 0, 7.4], hand_s: [0, 0, 7.9],
+    dial: [0, 17.2, 5.3], case: [-19.7, -8, 2], crown: [22.4, 0, 1.5], strap: [0, 29.5, -1.0], caseback: [-14, -12, -6.3],
+    mainplate: [12.4, 12.4, -0.6], hairspring: [2.2, -9.8 + 1.5, 3.7], balance: [-4.2, -9.8 - 3.0, 3.2], cock: [-9.5, -7.2, 4.8],
+    ratchet: [B[0] + 1.0, B[1] + 1.8, 5.5], bridge_barrel: [FT2[0] * 0.75 + B[0] * 0.25, FT2[1] * 0.75 + B[1] * 0.25, 4.8],
+    bridge_train: [3.6, 1.4, 4.8], bridge_escape: [(F[0] + E[0]) / 2 + 0.8, (F[1] + E[1]) / 2, 4.8],
+    barrel: [B[0] - 3.5, B[1] + 3.2, 1.5], center: [-3.6, -3.2, 2.3], third: [T[0] + 2.8, T[1] + 2.2, 1.3], fourth: [F[0] + 2.4, F[1] - 0.6, 2.3],
+    escape: [E[0] + 1.6, E[1] - 1.6, 1.3], pallet: [Pv[0] + 0.3, Pv[1] + 0.3, 1.2]
+  };
+  for (const id in parts) {
+    const P = parts[id];
+    if (P.virtual) {
+      const prefer = { jewels: 'bridge_train', screws: 'bridge_escape' }[id];
+      const m = P.meshes.find(mm => ownerOf(mm)?.id === prefer) || P.meshes[0];
+      P.owner = ownerOf(m);
+      P.anchor = root.worldToLocal(new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3()));
+    } else {
+      P.anchor = ANCHOR[id] ? new THREE.Vector3(...ANCHOR[id]) : root.worldToLocal(new THREE.Box3().setFromObject(P.group).getCenter(new THREE.Vector3()));
+    }
+  }
+}
+sealParts();
+
+// 爆炸时的错峰顺序：外层（水晶、表圈、指针）先动，装配时则由内向外依次归位
+const DELAYS = { crystal: 0, bezel: .05, hand_s: .08, hand_m: .12, hand_h: .16, dial: .25, ratchet: .3, bridge_barrel: .35, bridge_train: .35, bridge_escape: .35,
+  cock: .35, hairspring: .42, balance: .48, barrel: .55, center: .55, third: .55, fourth: .55, escape: .55, pallet: .55, mainplate: .7, case: .85, crown: .85, strap: .9, caseback: 1 };
+for (const id of partOrder) parts[id].delay = DELAYS[id] ?? 0.5;
+
+/* ════════════════════════════════════════════════════════════════════
+   地面：镜面反射 + 渐隐遮罩 + 投影
+   ════════════════════════════════════════════════════════════════════ */
+const FLOOR_Y = -35.4;
+const floorG = new THREE.Group(); floorG.position.y = FLOOR_Y; scene.add(floorG);
+const reflW = () => Math.floor(innerWidth * PR * 0.7), reflH = () => Math.floor(innerHeight * PR * 0.7);
+const refl = new Reflector(new THREE.PlaneGeometry(1000, 1000), { clipBias: 0.003, textureWidth: reflW(), textureHeight: reflH(), color: 0x8c9198, multisample: 4 });
+refl.rotation.x = -PI / 2; floorG.add(refl);
+const veil = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshBasicMaterial({
+  map: radialTex([[0, 'rgba(8,8,9,0.30)'], [0.07, 'rgba(8,8,9,0.46)'], [0.15, 'rgba(7,8,10,0.74)'], [0.24, 'rgba(6,7,10,0.94)'], [0.3, 'rgba(6,7,10,1)'], [1, 'rgba(6,7,10,1)']], 512),
+  transparent: true, depthWrite: false, toneMapped: false }));
+veil.rotation.x = -PI / 2; veil.position.y = 0.05; veil.renderOrder = 1; floorG.add(veil);
+const catcher = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), new THREE.ShadowMaterial({ opacity: 0.6 }));
+catcher.rotation.x = -PI / 2; catcher.position.y = 0.1; catcher.receiveShadow = true; catcher.renderOrder = 3; floorG.add(catcher);
+const blob = new THREE.Mesh(new THREE.PlaneGeometry(52, 34), new THREE.MeshBasicMaterial({
+  map: radialTex([[0, 'rgba(0,0,0,0.65)'], [0.5, 'rgba(0,0,0,0.28)'], [1, 'rgba(0,0,0,0)']], 256), transparent: true, depthWrite: false, toneMapped: false }));
+blob.rotation.x = -PI / 2; blob.position.set(0, 0.08, -14); blob.renderOrder = 2; floorG.add(blob);
+
+/* ════════════════════════════════════════════════════════════════════
+   相机与控制
+   ════════════════════════════════════════════════════════════════════ */
+const controls = new OrbitControls(camera, renderer.domElement);
+Object.assign(controls, { enableDamping: true, dampingFactor: 0.06, minDistance: 36, maxDistance: 420, maxPolarAngle: PI / 2 + 0.14, rotateSpeed: 0.7, zoomSpeed: 0.8, screenSpacePanning: true });
+const sph = (az, el, d, t) => new THREE.Vector3(t[0] + d * Math.sin(az) * Math.cos(el), t[1] + d * Math.sin(el), t[2] + d * Math.cos(az) * Math.cos(el));
+const VIEWS = {
+  hero:  { az: 0.34, el: 0.16, d: 128, t: [0, 0, -2] },
+  front: { az: 0.06, el: 0.06, d: 112, t: [0, 0, 0] },
+  iso:   { az: 0.82, el: 0.34, d: 138, t: [0, 0, -2] },
+  side:  { az: 1.5,  el: 0.05, d: 175, t: [0, 0, -6] },
+  back:  { az: PI - 0.3, el: 0.16, d: 116, t: [0, 0, -1] },
+  exploded: { az: 0.98, el: 0.2, d: 285, t: [0, 0, -4] }
+};
+camera.position.copy(sph(-0.9, 0.38, 330, [0, 0, 0])); controls.target.set(0, 0, 0);
+let tween = null;
+function flyView(v, dur = 1.8) {
+  const cur = camera.position.clone().sub(controls.target), d0 = cur.length();
+  const s0 = { az: Math.atan2(cur.x, cur.z), el: Math.asin(clamp(cur.y / d0, -1, 1)), d: d0 };
+  let da = v.az - s0.az; da = Math.atan2(Math.sin(da), Math.cos(da));
+  tween = { t0: performance.now(), dur: dur * 1000, s0, da, v, tg0: controls.target.clone(), tg1: new THREE.Vector3(...v.t) };
+}
+function stepTween(now) {
+  if (!tween) return;
+  const k = easeIO((now - tween.t0) / tween.dur), { s0, da, v } = tween;
+  controls.target.lerpVectors(tween.tg0, tween.tg1, k);
+  const d = Math.exp(lerp(Math.log(s0.d), Math.log(v.d), k));
+  camera.position.copy(sph(s0.az + da * k, lerp(s0.el, v.el, k), d, [controls.target.x, controls.target.y, controls.target.z]));
+  if (k >= 1) tween = null;
+}
+controls.addEventListener('start', () => { tween = null; autoIdle = 0; });
+
+/* ════════════════════════════════════════════════════════════════════
+   状态
+   ════════════════════════════════════════════════════════════════════ */
+const state = { explode: false, labels: false, spin: false, night: false, speedIdx: 1, warpIdx: 0, panel: true };
+const SPEEDS = [0.1, 0.5, 1], WARPS = [1, 60, 900, 7200];
+let exP = 1, exTarget = 1, night = 0, autoIdle = 0, TT = 0, mvT = 0, introDone = false;
+let simSec = (() => { const n = new Date(); return n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds() + n.getMilliseconds() / 1000; })();
+let power = 0.82, windT = 0, windSpin = 0;
+const EX_S = 4.5, AMP = 4.6;
+let hoverId = null, selId = null;
+
+/* ─── 爆炸视图 ─── */
+function applyExplode(p) {
+  for (const P of explodables) {
+    const k = easeIO(p * 1.6 - P.delay * 0.6);
+    P.group.position.set(P.base.x + P.dx * k, P.base.y + P.dy * k, P.base.z + P.zc * EX_S * k);
+  }
+  guides.visible = p > 0.005;
+  guides.material.opacity = 0.42 * smooth(p * 1.4);
+}
+let strapTransparent = false;
+const _v = new THREE.Vector3();
+function updateStrapFade() {
+  const lc = root.worldToLocal(_v.copy(camera.position)).normalize();
+  const viewFade = smooth((0.25 - lc.z) / 0.55);
+  const exFade = smooth(exP * 2) * 0.72;
+  const op = 1 - Math.max(viewFade * 0.93, exFade);
+  const tr = op < 0.995;
+  M.leather.opacity = M.thread.opacity = op;
+  if (tr !== strapTransparent) { strapTransparent = tr; M.leather.transparent = M.thread.transparent = tr; M.leather.needsUpdate = M.thread.needsUpdate = true; }
+  strapOpacity = op;
+}
+let strapOpacity = 1;
+
+/* ─── 夜光 / 灯光 ─── */
+function updateLighting(dt) {
+  night += ((state.night ? 1 : 0) - night) * Math.min(1, dt * 2.6);
+  const n = smooth(night);
+  scene.environmentIntensity = lerp(1.0, 0.03, n);
+  key.intensity = lerp(3.2, 0.0, n); rimL.intensity = lerp(1.5, 0.0, n);
+  sweep.intensity = lerp(9000, 0, n);
+  bloom.strength = lerp(0.3, 0.85, n); bloom.threshold = lerp(0.9, 0.55, n);
+  renderer.toneMappingExposure = lerp(1.05, 1.35, n);
+  M.lume.emissiveIntensity = lerp(0.35, 3.4, n);
+  const a = TT * 0.25;
+  sweep.position.set(32 * Math.sin(a) + 4, 26 + 8 * Math.sin(a * 1.7), 60 + 10 * Math.cos(a));
+  scene.environmentRotation.y = 0.35 * Math.sin(TT * 0.16) + mx * 0.25;
+}
+
+/* ─── 机芯运转 ─── */
+const secQ = (q, warp) => { if (warp > 1) return q / 8; const f = q - Math.floor(q); return (Math.floor(q) + easeOut(f / 0.16)) / 8; };
+function updateMovement(dt) {
+  const speed = SPEEDS[state.speedIdx], warp = WARPS[state.warpIdx];
+  mvT += dt * speed; simSec += dt * speed * warp;
+  const phi = TAU * 4 * mvT, theta = AMP * Math.sin(phi);
+  balSpin.rotation.z = theta; hairCollet.rotation.z = theta; hairUpdate(theta);
+  const tc = clamp(theta, -0.6, 0.6);
+  forkSpin.rotation.z = clamp(Math.atan2(-Math.sin(tc), Lb - Math.cos(tc)), -0.0873, 0.0873);
+  // 擒纵轮：在每次过零点跳一步（半个齿距）
+  const u = phi / PI + 0.04, m = Math.floor(u), sp = smooth((u - m) / 0.08);
+  const rhoE = (PI / 15) * (m - 1 + sp);
+  const rho4 = -rhoE * 8 / 30, rho3 = -rho4 * 10 / 36, rhoC = -rho3 * 10 / 48, rhoB = -rhoC * 14 / 56;
+  stageSpin.escape.rotation.z = rhoE; stageSpin.fourth.rotation.z = rho4; stageSpin.third.rotation.z = rho3;
+  stageSpin.center.rotation.z = rhoC; stageSpin.barrel.rotation.z = rhoB;
+  // 上链动画
+  if (windT > 0) {
+    windT = Math.max(0, windT - dt);
+    const k = Math.sin(clamp(windT / 2.6, 0, 1) * PI);
+    windSpin += dt * 14 * k; power = Math.min(1, power + dt * 0.11);
+    crownSpin.rotation.x = windSpin; ratchetSpin.rotation.z = windSpin * 0.09;
+  }
+  power = Math.max(0, power - dt * speed * warp * 0.00002);
+  // 指针
+  const secs = warp > 1 ? simSec : secQ(simSec * 8, 1);
+  handParts.h.group.rotation.z = -(simSec / 43200 % 1) * TAU;
+  handParts.m.group.rotation.z = -(simSec / 3600 % 1) * TAU;
+  handParts.s.group.rotation.z = -(secs / 60 % 1) * TAU;
+  live.theta = theta; live.rho = rhoE;
+}
+const live = { theta: 0, rho: 0 };
+
+/* ════════════════════════════════════════════════════════════════════
+   高亮 / 拾取
+   ════════════════════════════════════════════════════════════════════ */
+const hlCache = { hover: new Map(), sel: new Map() }, HLCOL = { hover: 0x46b8ff, sel: 0xffa63a };
+function hlMat(m, kind) {
+  let c = hlCache[kind].get(m);
+  if (!c) { c = m.clone(); c.emissive = new THREE.Color(HLCOL[kind]); c.emissiveIntensity = 0.5; hlCache[kind].set(m, c); }
+  return c;
+}
+function setPartHL(id, kind) {
+  const P = parts[id];
+  if (P.hlKind === kind) return;
+  for (const m of P.meshes) {
+    if (m.userData.origMat) { m.material = m.userData.origMat; m.userData.origMat = null; }
+    if (kind && m.material.isMeshStandardMaterial) { m.userData.origMat = m.material; m.material = hlMat(m.material, kind); }
+  }
+  P.hlKind = kind;
+}
+function refreshHL() {
+  for (const id in parts) setPartHL(id, id === selId ? 'sel' : id === hoverId ? 'hover' : null);
+  for (const id in labelEls) {
+    const L = labelEls[id], hot = id === hoverId, sel = id === selId;
+    L.el.classList.toggle('hot', hot && !sel); L.el.classList.toggle('sel', sel);
+    L.path.classList.toggle('hot', hot || sel); L.dot.classList.toggle('hot', hot || sel);
+  }
+  document.querySelectorAll('#plist .chip').forEach(c => { c.classList.toggle('hot', c.dataset.id === hoverId && c.dataset.id !== selId); c.classList.toggle('sel', c.dataset.id === selId); });
+}
+function resetHL() {
+  for (const id in parts) setPartHL(id, null);
+  hlCache.hover.clear(); hlCache.sel.clear(); refreshHL();
+}
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let mx = 0, my = 0, mouseX = 0, mouseY = 0, needPick = false, downInfo = null;
+function pickAt(x, y) {
+  ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  for (const h of ray.intersectObjects(pickables, false)) {
+    const pid = h.object.userData.partId;
+    if (pid === 'strap' && strapOpacity < 0.5) continue;
+    if (pid) return pid;
+  }
+  return null;
+}
+const tip = $('#tip');
+function setHover(id, showTip = false) {
+  if (id === hoverId) return;
+  hoverId = id; refreshHL();
+  if (id && showTip) { const p = PARTS[id]; tip.innerHTML = `<b>${p.zh}</b><i>${p.en}</i>`; tip.classList.add('on'); } else tip.classList.remove('on');
+  renderer.domElement.style.cursor = id ? 'pointer' : 'grab';
+}
+renderer.domElement.style.cursor = 'grab';
+renderer.domElement.addEventListener('pointermove', e => {
+  mouseX = e.clientX; mouseY = e.clientY; needPick = true;
+  mx = e.clientX / innerWidth - 0.5;
+  tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px';
+});
+renderer.domElement.addEventListener('pointerleave', () => { needPick = false; setHover(null); });
+renderer.domElement.addEventListener('pointerdown', e => { downInfo = { x: e.clientX, y: e.clientY, t: performance.now() }; renderer.domElement.style.cursor = 'grabbing'; });
+renderer.domElement.addEventListener('pointerup', e => {
+  renderer.domElement.style.cursor = hoverId ? 'pointer' : 'grab';
+  if (!downInfo) return;
+  const moved = Math.hypot(e.clientX - downInfo.x, e.clientY - downInfo.y), dt = performance.now() - downInfo.t;
+  downInfo = null;
+  if (moved < 6 && dt < 600) select(pickAt(e.clientX, e.clientY), true);
+});
+
+/* ─── 选中 & 详情卡 ─── */
+function partWorldBox(id) {
+  const b = new THREE.Box3();
+  for (const m of parts[id].meshes) b.expandByObject(m);
+  return b;
+}
+function select(id, fly = true) {
+  selId = (id && id === selId && fly) ? null : id;
+  refreshHL(); renderCard(selId);
+  if (selId && fly && !parts[selId].virtual) {
+    root.updateMatrixWorld(true);
+    const b = partWorldBox(selId), c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3()).length();
+    const cur = camera.position.clone().sub(controls.target), s0 = { az: Math.atan2(cur.x, cur.z), el: Math.asin(clamp(cur.y / cur.length(), -1, 1)) };
+    flyView({ az: s0.az, el: clamp(s0.el, 0.05, 0.6), d: clamp(sz * 2.1, 42, 240), t: [c.x, c.y, c.z] }, 1.3);
+  }
+}
+function renderCard(id) {
+  const el = $('#card');
+  if (!id) { el.innerHTML = '<div class="eyebrow" style="margin-bottom:10px">零件详情 · Detail</div><div class="empty">将鼠标悬停在任意零件上即可高亮；点击零件查看材质、功能与规格，并自动聚焦。</div>'; return; }
+  const p = PARTS[id];
+  el.innerHTML = `<div class="eyebrow" style="margin-bottom:10px">已选零件 · Selected</div><h3>${p.zh}<i>${p.en}</i></h3><span class="mat">${p.mat}</span><p>${p.desc}</p>
+    <div class="specs">${p.specs.map(s => `<div class="kv">${s[0]}<span>${s[1]}</span></div>`).join('')}</div>
+    <div class="foc"><button class="chip" id="cClear">取消选择</button><button class="chip" id="cHome">复位视角</button></div>`;
+  $('#cClear').onclick = () => select(null); $('#cHome').onclick = () => flyView(state.explode ? VIEWS.exploded : VIEWS.hero);
+}
+
+/* ─── 标签（左右两列引线布局）─── */
+const labelEls = {}, NS = 'http://www.w3.org/2000/svg', svg = $('#leaders');
+const LABEL_IDS = ['crystal', 'bezel', 'hand_h', 'hand_m', 'hand_s', 'dial', 'bridge_barrel', 'bridge_train', 'bridge_escape', 'cock', 'ratchet', 'mainplate', 'barrel', 'center', 'third', 'fourth', 'escape', 'pallet', 'balance', 'hairspring', 'jewels', 'screws', 'case', 'crown', 'strap', 'caseback'];
+for (const id of LABEL_IDS) {
+  const p = PARTS[id], el = document.createElement('div');
+  el.className = 'lbl'; el.innerHTML = `<b>${p.zh}</b>`;
+  el.addEventListener('pointerenter', () => setHover(id)); el.addEventListener('pointerleave', () => setHover(null));
+  el.addEventListener('click', () => select(id, true));
+  $('#labels').appendChild(el);
+  const path = document.createElementNS(NS, 'path'), dot = document.createElementNS(NS, 'circle'); dot.setAttribute('r', 3);
+  svg.append(path, dot);
+  labelEls[id] = { el, path, dot, w: 0, sx: 0, sy: 0 };
+}
+const _a = new THREE.Vector3(), _c = new THREE.Vector3();
+function spread(arr, minY, maxY, gap) {
+  arr.sort((a, b) => a.sy - b.sy);
+  let prev = -1e9; for (const it of arr) { it.ly = Math.max(it.sy, prev + gap, minY); prev = it.ly; }
+  if (arr.length && arr[arr.length - 1].ly > maxY) { let nxt = maxY; for (let i = arr.length - 1; i >= 0; i--) { arr[i].ly = Math.min(arr[i].ly, nxt); nxt = arr[i].ly - gap; } }
+}
+function updateLabels() {
+  const on = state.labels && introDone;
+  const items = [];
+  if (on) {
+    _c.set(0, 0, 0); root.localToWorld(_c).project(camera);
+    const W = innerWidth, H = innerHeight, cx = (_c.x * 0.5 + 0.5) * W;
+    for (const id of LABEL_IDS) {
+      const P = parts[id], L = labelEls[id];
+      _a.copy(P.anchor);
+      const o = P.owner; if (o) _a.set(_a.x + o.group.position.x - o.base.x, _a.y + o.group.position.y - o.base.y, _a.z + o.group.position.z - o.base.z);
+      root.localToWorld(_a).project(camera);
+      L.sx = (_a.x * 0.5 + 0.5) * W; L.sy = (-_a.y * 0.5 + 0.5) * H; L.behind = _a.z > 1;
+      if (!L.w) L.w = L.el.offsetWidth || 150;
+      items.push({ id, L, sx: L.sx, sy: L.sy, side: L.sx < cx ? -1 : 1 });
+    }
+    let minX = 1e9, maxX = -1e9; for (const it of items) { minX = Math.min(minX, it.sx); maxX = Math.max(maxX, it.sx); }
+    const rightLimit = W - (state.panel && W > 900 ? 338 + 44 : 0) - 24;
+    const leftCol = Math.max(190, minX - 70), rightCol = Math.min(rightLimit - 190, maxX + 70);
+    for (const side of [-1, 1]) {
+      const arr = items.filter(i => i.side === side); spread(arr, 40, H - 110, 27);
+      for (const it of arr) {
+        const L = it.L, ex = side < 0 ? leftCol : rightCol, x = side < 0 ? ex - L.w : ex, y = it.ly;
+        L.el.style.transform = `translate(${x}px,${y - 12}px)`;
+        L.path.setAttribute('d', `M${L.sx.toFixed(1)} ${L.sy.toFixed(1)}L${(ex - side * 22).toFixed(1)} ${y.toFixed(1)}L${ex.toFixed(1)} ${y.toFixed(1)}`);
+        L.dot.setAttribute('cx', L.sx.toFixed(1)); L.dot.setAttribute('cy', L.sy.toFixed(1));
+      }
+    }
+  }
+  for (const id of LABEL_IDS) {
+    const L = labelEls[id];
+    L.el.classList.toggle('show', on); L.path.style.display = L.dot.style.display = on ? '' : 'none';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   面板 / 按钮
+   ════════════════════════════════════════════════════════════════════ */
+(function buildPanel() {
+  const meshes = pickables.length;
+  const rows = [['机芯类型', '手动上链 · 镂空'], ['振频', '28,800 vph · 4 Hz'], ['红宝石轴承', jewelCount + ' 颗'], ['动力储存', '72 小时'],
+    ['机芯直径', '34.8 mm'], ['机芯厚度', '6.0 mm'], ['摆轮直径', '10.8 mm'], ['可拾取网格', meshes + ' 个']];
+  $('#specs').innerHTML = rows.map(r => `<div class="kv">${r[0]}<span>${r[1]}</span></div>`).join('');
+  const order = LABEL_IDS;
+  $('#plist').innerHTML = order.map(id => `<button class="chip" data-id="${id}">${PARTS[id].zh}</button>`).join('');
+  document.querySelectorAll('#plist .chip').forEach(c => {
+    c.addEventListener('pointerenter', () => setHover(c.dataset.id)); c.addEventListener('pointerleave', () => setHover(null));
+    c.addEventListener('click', () => select(c.dataset.id, true));
+  });
+  renderCard(null);
+  $('#themes').innerHTML = THEMES.map((t, i) => `<div class="sw${i === 0 ? ' on' : ''}" data-i="${i}" title="${t.zh}" style="background:radial-gradient(circle at 30% 30%,#fff8,${t.sw} 45%,#0006)"></div>`).join('');
+  document.querySelectorAll('.sw').forEach(s => s.addEventListener('click', () => {
+    document.querySelectorAll('.sw').forEach(x => x.classList.toggle('on', x === s));
+    resetHL(); applyTheme(+s.dataset.i); refreshHL();
+  }));
+})();
+const setOn = (id, on) => $(id).classList.toggle('on', on);
+let autoLabels = false;   // 标签是否由“爆炸视图”自动打开（关闭爆炸时一并关闭）
+function toggleExplode() {
+  state.explode = !state.explode; exTarget = state.explode ? 1 : 0; setOn('#bExplode', state.explode);
+  flyView(state.explode ? VIEWS.exploded : VIEWS.hero, 2.6);
+  if (state.explode && !state.labels) { toggleLabels(true); autoLabels = true; }
+  else if (!state.explode && autoLabels) { toggleLabels(false); autoLabels = false; }
+}
+function toggleLabels(v) { state.labels = v ?? !state.labels; setOn('#bLabels', state.labels); if (v === undefined) autoLabels = false; for (const id in labelEls) labelEls[id].w = 0; }
+function toggleSpin() { state.spin = !state.spin; setOn('#bSpin', state.spin); }
+function toggleNight() { state.night = !state.night; setOn('#bNight', state.night); }
+function cycleSpeed() { state.speedIdx = (state.speedIdx + 1) % SPEEDS.length; $('#speedTxt').textContent = '机芯 ' + SPEEDS[state.speedIdx] + '×'; }
+function cycleWarp() { state.warpIdx = (state.warpIdx + 1) % WARPS.length; $('#warpTxt').textContent = '时间 ×' + WARPS[state.warpIdx]; setOn('#bWarp', state.warpIdx > 0); }
+function wind() { windT = 2.6; }
+$('#bExplode').onclick = toggleExplode; $('#bLabels').onclick = () => toggleLabels(); $('#bSpin').onclick = toggleSpin;
+$('#bNight').onclick = toggleNight; $('#bSpeed').onclick = cycleSpeed; $('#bWarp').onclick = cycleWarp; $('#bWind').onclick = wind;
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+  if (state.explode) { toggleExplodeSilently(); }
+  flyView(VIEWS[b.dataset.view], 1.8);
+}));
+function toggleExplodeSilently() { state.explode = false; exTarget = 0; setOn('#bExplode', false); if (autoLabels) { toggleLabels(false); } autoLabels = false; }
+function setPanel(v) { state.panel = v; $('#panel').classList.toggle('hide', !v); $('#ptoggle').classList.toggle('show', !v); }
+$('#pclose').onclick = () => setPanel(false); $('#ptoggle').onclick = () => setPanel(true);
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'e') toggleExplode(); else if (k === 'l') toggleLabels(); else if (k === 'r') toggleSpin(); else if (k === 'n') toggleNight();
+  else if (k === 's') cycleSpeed(); else if (k === 't') cycleWarp(); else if (k === 'w') wind(); else if (k === 'i') setPanel(!state.panel);
+  else if (k === 'escape') select(null, false);
+  else if (k >= '1' && k <= '4') document.querySelectorAll('.sw')[+k - 1].click();
+});
+
+const gAmp = $('#gAmp'), bAmp = $('#bAmp'), gPow = $('#gPow'), bPow = $('#bPow'), gEsc = $('#gEsc'), bEsc = $('#bEsc'), clockEl = $('#clock');
+let liveT = 0;
+function updateLive(dt) {
+  liveT += dt; if (liveT < 0.1) return; liveT = 0;
+  const deg = Math.abs(live.theta) * 180 / PI, sp = SPEEDS[state.speedIdx];
+  gAmp.textContent = deg.toFixed(0) + '°  /  ±' + (AMP * 180 / PI).toFixed(0) + '°'; bAmp.style.width = (deg / (AMP * 180 / PI) * 100) + '%';
+  gPow.textContent = (power * 72).toFixed(1) + ' h  ·  ' + (power * 100).toFixed(0) + '%'; bPow.style.width = power * 100 + '%';
+  const rpm = 0.2667 * 60 * sp; gEsc.textContent = rpm.toFixed(1) + ' rpm  ·  ' + (8 * sp).toFixed(1) + ' 拍/秒'; bEsc.style.width = (sp) * 100 + '%';
+  const s = Math.floor(simSec) % 86400, h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60, p = n => String(n).padStart(2, '0');
+  clockEl.innerHTML = `${p(h)}:${p(m)}:${p(ss)}<small>${h < 12 ? 'AM' : 'PM'}</small>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   主循环
+   ════════════════════════════════════════════════════════════════════ */
+let shiftCur = 0;
+function updateViewOffset(dt) {
+  const W = innerWidth, H = innerHeight;
+  const target = (state.panel && W > 900) ? (338 + 44) / 2 : 0;
+  shiftCur += (target - shiftCur) * Math.min(1, dt * 4);
+  if (Math.abs(shiftCur) > 0.3) camera.setViewOffset(W, H, shiftCur, 0, W, H); else camera.clearViewOffset();
+}
+function onResize() {
+  const W = innerWidth, H = innerHeight;
+  renderer.setSize(W, H); composer.setSize(W, H);
+  camera.aspect = W / H; camera.updateProjectionMatrix();
+  refl.getRenderTarget().setSize(reflW(), reflH());
+}
+addEventListener('resize', onResize);
+
+const clock = new THREE.Clock();
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.05); TT += dt; autoIdle += dt;
+  const now = performance.now();
+  exP += clamp(exTarget - exP, -dt / 2.8, dt / 2.8);
+  applyExplode(exP);
+  updateMovement(dt);
+  if (state.spin) turntable.rotation.y += dt * 0.32;
+  root.position.y = Math.sin(TT * 0.7) * 0.25;
+  updateLighting(dt);
+  updateStrapFade();
+  stepTween(now);
+  controls.update();
+  updateViewOffset(dt);
+  if (needPick && !downInfo) { needPick = false; setHover(pickAt(mouseX, mouseY), true); }
+  const pu = 0.5 + 0.22 * Math.sin(TT * 5);
+  for (const k of ['hover', 'sel']) for (const c of hlCache[k].values()) c.emissiveIntensity = pu;
+  turntable.updateMatrixWorld(true); camera.updateMatrixWorld();
+  updateLabels();
+  updateLive(dt);
+  composer.render(dt);
+}
+
+/* ─── 开场：零件由爆炸状态飞入装配，镜头缓缓推近 ─── */
+applyTheme(0); applyExplode(1); updateMovement(0); onResize();
+window.__ready = true;
+frame();
+setTimeout(() => $('#loader').classList.add('done'), 500);
+setTimeout(() => { exTarget = 0; flyView(VIEWS.hero, 5.0); }, 1100);
+setTimeout(() => { introDone = true; }, 6200);
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "name": "dust2-fps",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser 3D FPS prototype: Dust2 5v5 (React + TypeScript + three.js, zero external assets)",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "check:map": "node scripts/check-map.ts",
+    "test:rules": "node scripts/test-rules.ts",
+    "sim": "node scripts/headless-sim.ts",
+    "balance": "node scripts/balance.ts 40 pistol",
+    "check:stuck": "node scripts/check-stuck.ts",
+    "smoke": "node --import ./scripts/mocks/register.mjs scripts/smoke-runtime.ts",
+    "verify": "npm run check:map && npm run test:rules && npm run smoke"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.160.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2"
+  }
+}
