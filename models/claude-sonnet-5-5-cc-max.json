@@ -18,6 +18,27 @@
         "en": "One-shot by claude-sonnet-5-5 (max) in Claude Code, unmodified, 197 minutes. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP. During this run the model executed a Bash script that made network requests, which the runner's strict No-Web check flagged as a violation; the maintainer chose to keep it as-is for observation only, so do not treat it as a strict No-Web result. This page is its build output (bundled from source into a single file at deploy time)."
       },
       "contributor": "Nagi-ovo"
+    },
+    "mythos-craft": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（max）一次生成，未经修改，耗时 136 分钟。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP。该次运行中模型通过 Bash 执行过带网络请求的脚本，runner 的 No-Web 严格检查因此将其标记为违规；维护者决定保留原样，仅供观察效果，请勿视为严格 No-Web 成绩。",
+        "en": "One-shot by claude-sonnet-5-5 (max) in Claude Code, unmodified, 136 minutes. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP. During this run the model executed a Bash script that made network requests, which the runner's strict No-Web check flagged as a violation; the maintainer chose to keep it as-is for observation only, so do not treat it as a strict No-Web result."
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "skeleton-watch": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（max）一次生成，未经修改，耗时 98 分 38 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by claude-sonnet-5-5 (max) in Claude Code, unmodified, 98 minutes 38 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "pelican-cycling": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（max）一次生成，未经修改，耗时 32 分 45 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by claude-sonnet-5-5 (max) in Claude Code, unmodified, 32 minutes 45 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
     }
   }
 }

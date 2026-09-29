@@ -33,6 +33,20 @@
         "en": "One-shot by claude-sonnet-5-5 (xhigh) in Claude Code, unmodified, 78 minutes 57 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
       },
       "contributor": "Nagi-ovo"
+    },
+    "skeleton-watch": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（xhigh）一次生成，未经修改，耗时 61 分 0 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by claude-sonnet-5-5 (xhigh) in Claude Code, unmodified, 61 minutes 0 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "pelican-cycling": {
+      "note": {
+        "zh": "在本地通过 Claude Code 以 claude-sonnet-5-5（xhigh）一次生成，未经修改，耗时 13 分 16 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by claude-sonnet-5-5 (xhigh) in Claude Code, unmodified, 13 minutes 16 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
     }
   }
 }

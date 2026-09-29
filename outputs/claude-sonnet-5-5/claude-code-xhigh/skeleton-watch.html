@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<!--
+  AURELIUS · Calibre A-21 — 交互式 3D 镂空机械表（单文件，Three.js r160 由 CDN 加载）
+  · 机芯：开放式发条盒 + 螺旋主发条 → 中心轮 → 三号轮 → 四号轮(小秒) → 擒纵轮 ⇄ 擒纵叉(红宝石叉瓦) ⇄ 摆轮 + 游丝
+  · 运动学：以擒纵拍数为唯一主变量，所有齿轮按真实齿数比联动；21,600 次/小时 (3 Hz)，摆幅 ≈ 270°，走时 = 本机时间
+  · 操作：拖动旋转 · 滚轮缩放 · 右键平移 · 点击零件 · 双击复位 · E 爆炸 · L 标签 · N 夜光 · W 上链 · T 拨针 · R 自转 · 1–6 视角 · [ ] 曝光
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#020305">
+<title>AURELIUS · Calibre A-21 — 交互式 3D 镂空机械表</title>
+<style>
+:root{--gold:#d8b26a;--gold2:#f3dca4;--ink:#ece8df;--mute:rgba(236,232,223,.56);--line:rgba(255,255,255,.09);--glass:rgba(11,13,18,.62);--cool:#7cc4ff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#020305;color:var(--ink);font:13px/1.55 "SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none}
+#lines{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+.ln{fill:none;stroke:var(--c);stroke-opacity:.4;stroke-width:1}
+.ln.hot{stroke-opacity:1;stroke-width:1.5}
+.dt{fill:var(--c);opacity:.9}.dt.hot{stroke:#fff;stroke-width:1.2}
+#labels{position:fixed;inset:0;pointer-events:none;display:none}
+.lab{position:absolute;left:0;top:0;width:168px;height:22px;display:flex;align-items:center;gap:7px;font-size:12px;color:#d6d2c8;opacity:0;pointer-events:none;white-space:nowrap;will-change:transform;transition:opacity .25s;cursor:pointer}
+.labels-on .lab{pointer-events:auto}
+.lab.left{flex-direction:row-reverse;text-align:right}
+.lab .n{font:600 10px ui-monospace,Menlo,Consolas,monospace;color:var(--c);opacity:.95}
+.lab .t{padding:2px 7px;border-radius:6px;background:rgba(10,12,16,.55);border:1px solid rgba(255,255,255,.06);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:.2s}
+.lab:hover .t,.lab.hot .t{color:#fff;border-color:var(--c);box-shadow:0 0 14px -2px var(--c);background:rgba(16,20,28,.8)}
+#tip{position:fixed;left:0;top:0;pointer-events:none;padding:7px 11px;border-radius:10px;background:rgba(10,12,17,.82);border:1px solid rgba(216,178,106,.35);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .15s;font-size:13px;z-index:9;display:flex;flex-direction:column;gap:1px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#tip.on{opacity:1}#tip b{font-weight:600;color:var(--gold2)}#tip span{font-size:10.5px;color:var(--mute);letter-spacing:.06em}
+
+/* 品牌 */
+#brand{position:fixed;left:26px;top:22px;pointer-events:none}
+#brand .logo{font:500 25px/1 "Didot","Bodoni MT","Playfair Display","Noto Serif SC","Songti SC",Georgia,serif;letter-spacing:.42em;color:var(--gold2);text-shadow:0 0 30px rgba(216,178,106,.28)}
+#brand .line{width:54px;height:1px;margin:11px 0 9px;background:linear-gradient(90deg,var(--gold),transparent)}
+#brand .sub{font-size:10.5px;letter-spacing:.32em;color:var(--mute)}#brand .cn{font-size:12px;margin-top:3px;color:rgba(236,232,223,.78);letter-spacing:.14em}
+
+/* 提示 */
+#toast{position:fixed;left:50%;top:24px;transform:translate(-50%,-14px);padding:9px 18px;border-radius:999px;background:rgba(12,14,19,.82);border:1px solid rgba(216,178,106,.4);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:.35s;color:var(--gold2);letter-spacing:.06em;z-index:20}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* HUD */
+#hud{position:fixed;left:24px;bottom:22px;width:238px;padding:14px 16px;border-radius:16px;background:var(--glass);-webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);border:1px solid var(--line);box-shadow:0 16px 46px rgba(0,0,0,.5);pointer-events:none}
+#hud .time{font:300 30px/1 "SF Mono",ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:#f6efdb}
+#hud .row{display:flex;justify-content:space-between;margin-top:9px;font-size:11px;color:var(--mute)}#hud .row b{font:500 11.5px ui-monospace,Menlo,monospace;color:var(--ink)}
+#hud .bar{height:4px;margin-top:11px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}#hud .bar i{display:block;height:100%;width:70%;border-radius:3px;background:linear-gradient(90deg,#b98a3e,#f3dca4);box-shadow:0 0 12px rgba(243,220,164,.55);transition:width .2s}
+body.winding #hud .bar i{background:linear-gradient(90deg,#3c9bd6,#9fe0ff);box-shadow:0 0 14px rgba(124,196,255,.7)}
+#hint{position:fixed;left:26px;bottom:2px;font-size:10.5px;letter-spacing:.04em;color:rgba(236,232,223,.34);pointer-events:none;white-space:nowrap}
+
+/* 底部工具栏 */
+#dock{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;padding:7px;border-radius:20px;background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);max-width:calc(100vw - 24px)}
+.grp{display:flex;align-items:center;gap:3px;padding:0 5px}.grp+.grp{border-left:1px solid var(--line);padding-left:9px}
+.btn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--ink);font:inherit;cursor:pointer;transition:background .2s,border-color .2s,color .2s,box-shadow .2s;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.075)}.btn:active{transform:translateY(1px)}
+.btn.on{background:linear-gradient(180deg,rgba(216,178,106,.24),rgba(216,178,106,.07));border-color:rgba(216,178,106,.55);color:var(--gold2);box-shadow:0 0 24px rgba(216,178,106,.2)}
+.btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn kbd{font:600 9.5px ui-monospace,monospace;opacity:.5;border:1px solid var(--line);border-radius:4px;padding:0 4px;line-height:14px}
+.btn.sm{padding:0 10px;height:32px;font-size:12px}
+.seg .btn{padding:0 9px;height:32px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+
+/* 右侧面板 */
+#ptoggle{position:fixed;right:16px;top:16px;z-index:12;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--gold2);cursor:pointer}
+#ptoggle svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#ptoggle:hover{border-color:rgba(216,178,106,.5)}
+#panel{position:fixed;top:64px;right:16px;bottom:96px;width:340px;display:flex;flex-direction:column;border-radius:20px;background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid var(--line);box-shadow:0 24px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05);transform:translateX(calc(100% + 30px));opacity:0;transition:transform .6s cubic-bezier(.2,.8,.2,1),opacity .4s;overflow:hidden;z-index:11}
+#panel.open{transform:none;opacity:1}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:15px 18px 12px;border-bottom:1px solid var(--line)}
+.ph .k{font-size:10px;letter-spacing:.3em;color:var(--gold)}.ph .t{font:500 17px/1.3 "Didot","Noto Serif SC","Songti SC",Georgia,serif;letter-spacing:.14em;margin-top:1px}
+.ic{width:28px;height:28px;border-radius:9px;background:transparent;border:1px solid var(--line);color:var(--mute);cursor:pointer;font-size:16px;line-height:1}.ic:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.pscroll{flex:1;overflow:auto;padding:14px 18px 20px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+.pscroll::-webkit-scrollbar{width:6px}.pscroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:3px}
+.card{padding:15px 16px 12px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);min-height:150px;animation:fade .35s}
+.card.empty{display:grid;place-items:center;text-align:center;color:var(--mute);border-style:dashed}.hintline{line-height:1.8}.hintline span{font-size:11.5px;opacity:.7}
+@keyframes fade{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:none}}
+.card .cat{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.18em;color:var(--c)}.card .cat i{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.card h3{font:500 21px/1.25 "Didot","Noto Serif SC","Songti SC",Georgia,serif;margin:5px 0 1px;letter-spacing:.06em;color:#fbf3dc}
+.card .en{font-size:10.5px;letter-spacing:.2em;color:var(--mute);text-transform:uppercase}
+.card p{margin:11px 0 10px;font-size:12.5px;line-height:1.75;color:rgba(236,232,223,.84)}
+.card table,.specs table{width:100%;border-collapse:collapse;font-size:12px}
+.card td,.specs td{padding:5px 0;border-top:1px solid var(--line);vertical-align:top}.card td:first-child,.specs td:first-child{color:var(--mute);width:38%;padding-right:8px}.card td:last-child,.specs td:last-child{color:var(--ink)}
+.specs{margin-top:18px}.specs h4,.plist h4{font-size:10.5px;letter-spacing:.3em;color:var(--gold);font-weight:500;margin-bottom:6px}
+.plist{margin-top:18px}.pcat{margin-bottom:11px}.pct{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--c);margin-bottom:5px}.pct i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:3px 9px;border-radius:999px;font:inherit;font-size:11.5px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:rgba(236,232,223,.8);cursor:pointer;transition:.18s}
+.chip:hover,.chip.on{background:rgba(216,178,106,.16);border-color:rgba(216,178,106,.6);color:var(--gold2)}
+
+/* 加载 */
+#loader{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 45%,#0d1017,#020305 70%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;transition:opacity 1s .1s,visibility 1s .1s}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none}
+#loader .lg{font:400 34px/1 "Didot","Bodoni MT","Noto Serif SC",Georgia,serif;letter-spacing:.55em;padding-left:.55em;color:var(--gold2)}
+#loader .sb{font-size:11px;letter-spacing:.4em;color:var(--mute)}
+#loader .bar{width:min(320px,70vw);height:2px;background:rgba(255,255,255,.1);overflow:hidden;border-radius:2px}#loader .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,transparent,var(--gold2));transition:width .3s}
+#lmsg{font-size:12px;color:var(--mute);letter-spacing:.12em;min-height:20px;text-align:center;max-width:80vw}
+#fatal{position:fixed;inset:0;z-index:60;background:rgba(2,3,5,.94);display:none;align-items:center;justify-content:center;padding:24px}
+#fatal>div{max-width:760px;max-height:86vh;overflow:auto;user-select:text;-webkit-user-select:text}#fatal b{font-size:18px;color:#ff9c8a}#fatal pre{margin:12px 0;padding:12px;border-radius:10px;background:#0d1015;border:1px solid var(--line);color:#f0c8c0;font:11.5px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-all}#fatal p{color:var(--mute)}
+
+@media (max-width:900px){
+  #panel{width:min(340px,calc(100vw - 32px));bottom:132px}
+  #hud{display:none}#hint{display:none}#brand .logo{font-size:19px}
+  .btn{padding:0 9px}.btn span,.btn kbd{display:none}.btn.sm span{display:inline}
+  #dock{bottom:12px}
+}
+@media (max-height:640px){#hud{display:none}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<canvas id="gl" tabindex="0"></canvas>
+<svg id="lines" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id="labels"></div>
+<div id="tip"></div>
+<div id="toast"></div>
+
+<header id="brand">
+  <div class="logo">AURELIUS</div><div class="line"></div>
+  <div class="sub">CALIBRE A-21 · SKELETON</div><div class="cn">手动上链镂空机械表</div>
+</header>
+
+<button id="ptoggle" aria-label="机芯信息" aria-expanded="true" title="机芯信息 (I)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/></svg></button>
+<aside id="panel" class="open">
+  <div class="ph"><div><div class="k">CALIBRE A-21</div><div class="t">机芯信息</div></div><button id="pclose" class="ic" aria-label="收起">×</button></div>
+  <div class="pscroll">
+    <section id="card" class="card empty"></section>
+    <section class="specs"><h4>机芯参数</h4>
+      <table>
+        <tr><td>型号</td><td>Calibre A-21 “Squelette”</td></tr>
+        <tr><td>类型</td><td>手动上链 · 全镂空</td></tr>
+        <tr><td>夹板直径</td><td id="s-dia">—</td></tr>
+        <tr><td>机芯厚度</td><td id="s-thick">—</td></tr>
+        <tr><td>振频</td><td>21,600 次/小时 (3 Hz)</td></tr>
+        <tr><td>摆轮</td><td>Ø 8.8 mm · 摆幅 ≈ 270°</td></tr>
+        <tr><td>擒纵</td><td>瑞士杠杆 · 15 齿擒纵轮</td></tr>
+        <tr><td>宝石</td><td id="s-jewel">—</td></tr>
+        <tr><td>动力储备</td><td id="s-res">—</td></tr>
+        <tr><td>当前时间</td><td id="s-time">—</td></tr>
+        <tr><td>模型规模</td><td id="s-parts">—</td></tr>
+      </table>
+    </section>
+    <section class="plist"><h4>零件目录</h4><div id="plist"></div></section>
+  </div>
+</aside>
+
+<div id="hud">
+  <div class="time" id="h-time">--:--:--</div>
+  <div class="row"><span>摆轮摆幅</span><b id="h-amp">000°</b></div>
+  <div class="row"><span>擒纵节拍</span><b id="h-beat">6 拍/秒</b></div>
+  <div class="row"><span>动力储备</span><b id="h-res">—</b></div>
+  <div class="bar"><i id="h-bar"></i></div>
+</div>
+<div id="hint">拖动旋转 · 滚轮缩放 · 右键平移 · 点击零件 · 双击复位 · 快捷键 E L N W T R · 1–6 视角 · [ ] 曝光</div>
+
+<nav id="dock" aria-label="控制">
+  <div class="grp" id="views">
+    <button class="btn sm" data-view="home" title="默认视角 (1)"><span>展示</span></button>
+    <button class="btn sm" data-view="front" title="正面"><span>正面</span></button>
+    <button class="btn sm" data-view="back" title="背面 (3)"><span>背面</span></button>
+    <button class="btn sm" data-view="esc" title="擒纵微距 (4)"><span>擒纵</span></button>
+    <button class="btn sm" data-view="balance" title="摆轮微距 (5)"><span>摆轮</span></button>
+    <button class="btn sm" data-view="barrel" title="发条盒微距 (6)"><span>发条盒</span></button>
+  </div>
+  <div class="grp">
+    <button class="btn on" data-act="explode" title="爆炸视图 (E)"><svg viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 17l8 4 8-4" opacity=".55"/></svg><span>爆炸视图</span><kbd>E</kbd></button>
+    <button class="btn" data-act="labels" title="零件标签 (L)"><svg viewBox="0 0 24 24"><path d="M20.5 12.5l-8 8-9-9V3.5h8l9 9z"/><circle cx="7.6" cy="7.6" r="1.3"/></svg><span>零件标签</span><kbd>L</kbd></button>
+    <button class="btn" data-act="night" title="夜光模式 (N)"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span>夜光</span><kbd>N</kbd></button>
+    <button class="btn" data-act="wind" title="上链 (W)"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg><span>上链</span><kbd>W</kbd></button>
+    <button class="btn" data-act="set" title="拨针 (T)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg><span>拨针</span><kbd>T</kbd></button>
+    <button class="btn" data-act="rotate" title="自动旋转 (R)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6"/><ellipse cx="12" cy="12" rx="10" ry="4.4" transform="rotate(-28 12 12)"/></svg><span>自转</span><kbd>R</kbd></button>
+  </div>
+  <div class="grp seg" title="走时速度 (1× = 真实时间)">
+    <button class="btn" data-speed="0.1">0.1×</button><button class="btn" data-speed="0.25">0.25×</button><button class="btn on" data-speed="1">1×</button>
+  </div>
+  <div class="grp"><button class="btn sm" id="qbtn" title="画质"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l3-4 3 3 2-2 3 3"/></svg><span>高</span></button></div>
+</nav>
+
+<div id="loader"><div class="lg">AURELIUS</div><div class="sb">CALIBRE A-21 · SKELETON</div><div class="bar"><i id="lbar"></i></div><div id="lmsg">正在加载…</div></div>
+<div id="fatal"></div>
+<noscript><div style="position:fixed;inset:0;display:grid;place-items:center;background:#000;color:#ddd;z-index:99">需要启用 JavaScript 才能查看此 3D 展示。</div></noscript>
+
+<script>
+setTimeout(function () {
+  if (!window.__watchReady && document.getElementById('fatal').style.display !== 'flex') {
+    var l = document.getElementById('lmsg');
+    if (l) l.innerHTML = '加载时间较长……<br>Three.js 通过 CDN 加载 (cdn.jsdelivr.net)，请检查网络是否可访问。';
+  }
+}, 14000);
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ============================================================
+ *  CORE · 纯数学 (无 three.js 依赖)：SDF / 行进方块 / 轮系布局 / 擒纵运动学
+ * ============================================================ */
+const TAU = Math.PI * 2, DEG = Math.PI / 180;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const smoother = t => { t = clamp(t, 0, 1); return t * t * t * (t * (t * 6 - 15) + 10); };
+const wrapPi = a => a - TAU * Math.round(a / TAU);
+const polar = (c, r, a) => ({ x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a) });
+const dist2 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/* ---------- SDF 基元 ---------- */
+const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
+const smax = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.max(a, b) + h * h * k * 0.25; };
+const sdCircle = (x, y, c, r) => { const dx = x - c.x, dy = y - c.y; return Math.sqrt(dx * dx + dy * dy) - r; };
+/* 锥形胶囊：a→b，端点半径 ra→rb */
+function sdCapsule(x, y, a, b, ra, rb = ra) {
+  const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+  let h = l2 > 0 ? ((x - a.x) * dx + (y - a.y) * dy) / l2 : 0;
+  h = h < 0 ? 0 : h > 1 ? 1 : h;
+  const px = x - a.x - dx * h, py = y - a.y - dy * h;
+  return Math.sqrt(px * px + py * py) - (ra + (rb - ra) * h);   // (Math.hypot 在 V8 中很慢，热路径用 sqrt)
+}
+/* 二次贝塞尔臂：把弧线拆成若干锥形胶囊，返回“点→SDF”函数 */
+function arcArm(a, b, bend, ra, rb = ra, segs = 14) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+  const c = { x: mx - dy / l * bend, y: my + dx / l * bend };
+  const pts = [];
+  for (let i = 0; i <= segs; i++) {
+    const t = i / segs, u = 1 - t;
+    pts.push({ x: u * u * a.x + 2 * u * t * c.x + t * t * b.x, y: u * u * a.y + 2 * u * t * c.y + t * t * b.y, r: ra + (rb - ra) * t });
+  }
+  // 包围盒早退：远离弧臂的采样点只需返回一个足够大的正数 (等值线只出现在臂的附近)
+  const PAD = 2.2; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const p of pts) { x0 = Math.min(x0, p.x - p.r - PAD); x1 = Math.max(x1, p.x + p.r + PAD); y0 = Math.min(y0, p.y - p.r - PAD); y1 = Math.max(y1, p.y + p.r + PAD); }
+  return (x, y) => {
+    if (x < x0 || x > x1 || y < y0 || y > y1) return 50;
+    let d = 1e9;
+    for (let i = 0; i < segs; i++) { const v = sdCapsule(x, y, pts[i], pts[i + 1], pts[i].r, pts[i + 1].r); if (v < d) d = v; }
+    return d;
+  };
+}
+
+/* ---------- 行进方块：把 SDF (f<0 为内部) 提取为闭合轮廓环 ---------- */
+function marchLoops(f, x0, y0, x1, y1, step, tol = 0.004) {
+  const nx = Math.ceil((x1 - x0) / step), ny = Math.ceil((y1 - y0) / step), W = nx + 1;
+  const val = new Float32Array(W * (ny + 1));
+  for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) {
+    let v = f(x0 + i * step, y0 + j * step);
+    if (i === 0 || j === 0 || i === nx || j === ny) v = Math.max(v, 1e-4); // 边界强制为外部，保证轮廓闭合
+    val[j * W + i] = v;
+  }
+  const px = [], py = [], cache = new Map();
+  const edge = (kind, i, j) => {           // kind 0: (i,j)→(i+1,j)   kind 1: (i,j)→(i,j+1)
+    const key = (j * W + i) * 2 + kind;
+    let id = cache.get(key); if (id !== undefined) return id;
+    const a = val[j * W + i], b = kind === 0 ? val[j * W + i + 1] : val[(j + 1) * W + i];
+    const t = a / (a - b);
+    px.push(x0 + (i + (kind === 0 ? t : 0)) * step);
+    py.push(y0 + (j + (kind === 1 ? t : 0)) * step);
+    id = px.length - 1; cache.set(key, id); return id;
+  };
+  const next = new Map();
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const in0 = val[j * W + i] < 0, in1 = val[j * W + i + 1] < 0, in2 = val[(j + 1) * W + i + 1] < 0, in3 = val[(j + 1) * W + i] < 0;
+    if (in0 === in1 && in1 === in2 && in2 === in3) continue;
+    const ins = [in0, in1, in2, in3], cr = [];
+    for (let k = 0; k < 4; k++) if (ins[k] !== ins[(k + 1) & 3]) cr.push([k, ins[k]]);
+    const eid = k => k === 0 ? edge(0, i, j) : k === 1 ? edge(1, i + 1, j) : k === 2 ? edge(0, i, j + 1) : edge(1, i, j);
+    for (let p = 0; p < cr.length; p++) if (cr[p][1]) next.set(eid(cr[p][0]), eid(cr[(p + 1) % cr.length][0]));
+  }
+  const seen = new Set(), loops = [];
+  for (const s of next.keys()) {
+    if (seen.has(s)) continue;
+    const ids = []; let cur = s;
+    while (cur !== undefined && !seen.has(cur)) { seen.add(cur); ids.push(cur); cur = next.get(cur); }
+    if (ids.length < 3) continue;
+    const pts = ids.map(id => [px[id], py[id]]);
+    const sp = simplifyLoop(pts, tol);
+    if (sp.length >= 3) loops.push(sp);
+  }
+  return loops;
+}
+function rdp(p, tol) {
+  if (p.length < 3) return p;
+  const a = p[0], b = p[p.length - 1], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1e-9;
+  let dm = -1, im = 0;
+  for (let i = 1; i < p.length - 1; i++) {
+    const d = Math.abs((p[i][0] - a[0]) * dy - (p[i][1] - a[1]) * dx) / l;
+    if (d > dm) { dm = d; im = i; }
+  }
+  if (dm <= tol) return [a, b];
+  const L = rdp(p.slice(0, im + 1), tol), R = rdp(p.slice(im), tol);
+  return L.slice(0, -1).concat(R);
+}
+function simplifyLoop(pts, tol) {
+  if (pts.length < 8) return pts;
+  let far = 0, dm = 0;
+  for (let i = 1; i < pts.length; i++) { const d = (pts[i][0] - pts[0][0]) ** 2 + (pts[i][1] - pts[0][1]) ** 2; if (d > dm) { dm = d; far = i; } }
+  const A = rdp(pts.slice(0, far + 1), tol), B = rdp(pts.slice(far).concat([pts[0]]), tol);
+  return A.slice(0, -1).concat(B.slice(0, -1));
+}
+const loopArea = l => { let s = 0; for (let i = 0; i < l.length; i++) { const a = l[i], b = l[(i + 1) % l.length]; s += a[0] * b[1] - b[0] * a[1]; } return s / 2; };
+function pointInLoop(x, y, l) {
+  let c = false;
+  for (let i = 0, j = l.length - 1; i < l.length; j = i++) {
+    if ((l[i][1] > y) !== (l[j][1] > y) && x < (l[j][0] - l[i][0]) * (y - l[i][1]) / (l[j][1] - l[i][1]) + l[i][0]) c = !c;
+  }
+  return c;
+}
+/* 把 SDF 的所有环分类为 {outer, holes[]} 组 */
+function classifyLoops(loops) {
+  const outers = [], holes = [];
+  for (const l of loops) (loopArea(l) > 0 ? outers : holes).push(l);
+  const groups = outers.map(o => ({ outer: o, holes: [], area: loopArea(o) }));
+  for (const h of holes) {
+    let best = null;
+    for (const g of groups) if (pointInLoop(h[0][0], h[0][1], g.outer) && (!best || g.area < best.area)) best = g;
+    if (best) best.holes.push(h);
+  }
+  return groups;
+}
+
+/* ============================================================
+ *  机芯布局（单位 mm；+x=3点，+y=12点，+z 朝向表面）
+ * ============================================================ */
+const G = {
+  // 轮系齿数与模数 (每一对啮合共用一个模数)
+  barrel:  { N: 48, m: 0.25 }, cPin: { N: 6, m: 0.25 },
+  cWheel:  { N: 48, m: 0.17 }, tPin: { N: 6, m: 0.17 },
+  tWheel:  { N: 45, m: 0.14 }, f4Pin: { N: 6, m: 0.14 },
+  f4Wheel: { N: 72, m: 0.10 }, ePin: { N: 6, m: 0.10 },
+  escN: 15,
+  ratchet: { N: 32, m: 0.20 }, crownW: { N: 18, m: 0.20 }, windP: { N: 10, m: 0.20 },
+  cannon: { N: 10, m: 0.12 }, minW: { N: 40, m: 0.12 }, minP: { N: 10, m: 0.15 }, hourW: { N: 30, m: 0.15 },
+};
+const pitchR = g => g.m * g.N / 2;
+const meshD = (a, b) => (a.m * (a.N + b.N)) / 2;
+
+const ESC = { R: 2.3, L: 4.0, rp: 1.15, phi: 6 * DEG, A: 270 * DEG, f: 3, uAng: -30 * DEG, thLim: 60 * DEG };
+ESC.d = ESC.R / Math.cos(30 * DEG);          // 擒纵轮心 → 擒纵叉轴心
+ESC.stoneL = ESC.R * Math.tan(30 * DEG);      // 叉瓦臂长
+
+const PL = {};                                // 关键点
+PL.C = { x: 0, y: 0 };
+PL.BAR = polar(PL.C, meshD(G.barrel, G.cPin), 30 * DEG);
+PL.T = polar(PL.C, meshD(G.cWheel, G.tPin), 156.4 * DEG);
+PL.F4 = polar(PL.T, meshD(G.tWheel, G.f4Pin), 207 * DEG);
+PL.E = polar(PL.F4, meshD(G.f4Wheel, G.ePin), -105 * DEG);
+PL.F = polar(PL.E, ESC.d, ESC.uAng);          // 擒纵叉
+PL.B = polar(PL.E, ESC.d + ESC.L, ESC.uAng);  // 摆轮
+PL.Mw = polar(PL.C, meshD(G.cannon, G.minW), 70 * DEG);
+{ // 上链：棘轮(BAR) → 龙头轮 W → 上链小轮 P(在柄轴 y=0 上)
+  const dRW = meshD(G.ratchet, G.crownW), dWP = meshD(G.crownW, G.windP), wy = 2.6;
+  const dx = Math.sqrt(dWP * dWP - wy * wy);
+  const px = PL.BAR.x - dx + Math.sqrt(dRW * dRW - (wy - PL.BAR.y) ** 2);
+  PL.P = { x: px, y: 0 }; PL.W = { x: px + dx, y: wy };
+}
+
+/* 啮合相位：使 A 的齿正对 B 的齿槽 (齿中心位于局部角 0) */
+function meshTheta(NA, thA, pA, NB, pB) {
+  const phi = Math.atan2(pB.y - pA.y, pB.x - pA.x);
+  return phi + Math.PI + (Math.PI - NA * (thA - phi)) / NB;
+}
+
+/* 轮系：以擒纵拍数 B 为主变量。 转角 = 初相 + 比率 × B  (逆时针为正)
+   同轴的“大轮 + 小齿轴”共用一个角度。 */
+const TRAIN = {};
+{
+  const esc0 = ESC.uAng - 30 * DEG;           // 擒纵轮初相（B=0 时齿尖位于叉瓦 -30° 处）
+  TRAIN.esc = { th0: esc0, k: 12 * DEG };     // 每拍半个齿距 (360/15/2)
+  const k4 = -TRAIN.esc.k * G.ePin.N / G.f4Wheel.N;
+  TRAIN.f4 = { th0: meshTheta(G.ePin.N, esc0, PL.E, G.f4Wheel.N, PL.F4), k: k4 };
+  const k3 = -k4 * G.f4Pin.N / G.tWheel.N;
+  TRAIN.t = { th0: meshTheta(G.f4Pin.N, TRAIN.f4.th0, PL.F4, G.tWheel.N, PL.T), k: k3 };
+  const kc = -k3 * G.tPin.N / G.cWheel.N;
+  TRAIN.c = { th0: meshTheta(G.tPin.N, TRAIN.t.th0, PL.T, G.cWheel.N, PL.C), k: kc };
+  const kb = -kc * G.cPin.N / G.barrel.N;
+  TRAIN.bar = { th0: meshTheta(G.cPin.N, TRAIN.c.th0, PL.C, G.barrel.N, PL.BAR), k: kb };
+}
+/* 时分轮系：以分针 CW 角 α 为主变量；卡口 cannon 角 = -α */
+const MW = {};
+{
+  MW.cannon0 = 0;
+  MW.minW0 = meshTheta(G.cannon.N, MW.cannon0, PL.C, G.minW.N, PL.Mw);
+  MW.hourW0 = meshTheta(G.minP.N, MW.minW0, PL.Mw, G.hourW.N, PL.C);
+}
+/* 上链轮系：以棘轮角 θr 为主变量 */
+const WD = {};
+{
+  WD.ratchet0 = 0;
+  WD.crown0 = meshTheta(G.ratchet.N, WD.ratchet0, PL.BAR, G.crownW.N, PL.W);
+}
+
+/* ---------- 擒纵运动学 ----------
+   t: 秒 → { theta 摆轮角, psi 擒纵叉角, beat 累计拍数 (连续) } */
+/* 擒纵叉角：叉口始终指向冲击销，超出叉的限位钉后饱和在 ±φ；仅是摆轮角的函数 */
+function forkPsi(theta) {
+  const th = clamp(theta, -ESC.thLim, ESC.thLim);
+  return clamp(Math.atan2(-ESC.rp * Math.sin(th), ESC.L - ESC.rp * Math.cos(th)), -ESC.phi, ESC.phi);
+}
+function escapement(t) {
+  const p = TAU * ESC.f * t;
+  const n = Math.floor((p + Math.PI / 2) / Math.PI);
+  const theta = ESC.A * Math.sin(p);
+  const psi = forkPsi(theta);
+  const v = (n % 2 === 0) ? (ESC.phi - psi) / (2 * ESC.phi) : (psi + ESC.phi) / (2 * ESC.phi);
+  return { theta, psi, beat: n - 1 + v };
+}
+
+/* ============================================================
+ *  GEO · three.js 几何 / 材质 / 纹理 / 零件工厂
+ * ============================================================ */
+const V2 = (x, y) => new THREE.Vector2(x, y);
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+const toV2 = l => l.map(p => V2(p[0], p[1]));
+const Z_AXIS = V3(0, 0, 1), X_AXIS = V3(1, 0, 0);
+
+/* 竖直方向层高表 (mm)，前视 +z */
+const Z = {
+  plate: [-0.9, 0],
+  barrel: [0.4, 2.4], spring: [0.62, 2.2],
+  cWheel: [2.6, 3.1], cPin: [1.0, 2.2],
+  tWheel: [1.4, 1.9], tPin: [2.5, 3.2],
+  f4Wheel: [0.6, 1.1], f4Pin: [1.3, 2.0],
+  ePin: [0.5, 1.2], esc: [1.5, 2.0], fork: [1.5, 2.0],
+  roller: [1.15, 1.45], impulse: [1.4, 2.05],
+  balRim: [3.4, 3.85], hair: 4.15,
+  palletBr: [2.0, 2.8], trainBr: [3.5, 4.3], barrelBr: [3.7, 4.5], cock: [4.55, 5.3],
+  keyless: [4.68, 5.13], stem: 4.95,
+  ring: [5.0, 5.5], index: [5.5, 5.95], sub: [4.5, 4.8],
+  mwLow: [4.6, 5.1], mwHigh: [5.3, 5.7],
+  secHand: [5.35, 5.5], hourHand: [6.35, 6.6], minHand: [6.75, 7.0],
+  caseTop: 7.4, bezel: [7.4, 8.6], crystalBottom: 7.5,
+};
+const RING_IN = 13.4, RING_OUT = 17.4, PLATE_R = 16.4, CASE_R = 21.0;
+
+/* ---------- 全局登记 ---------- */
+const ENV = { tex: null };
+const allMats = [];
+const parts = {};
+const pickables = [];
+const nodes = {};
+let watch = null;
+
+function reg(m, env = 1) {
+  m.envMap = ENV.tex; m.envMapIntensity = env;
+  m.userData.env = env;
+  m.userData.em = m.emissive ? m.emissive.clone() : null;
+  m.userData.ei = m.emissiveIntensity !== undefined ? m.emissiveIntensity : 1;
+  allMats.push(m); return m;
+}
+const std = (p, env = 1) => reg(new THREE.MeshStandardMaterial(p), env);
+const phys = (p, env = 1) => reg(new THREE.MeshPhysicalMaterial(p), env);
+
+function makeNode(name, dz, dx = 0) {
+  const g = new THREE.Group(); g.name = name; g.userData.dz = dz; g.userData.dx = dx;
+  watch.add(g); nodes[name] = g; return g;
+}
+function tagMesh(id, m) {
+  const p = parts[id]; if (!p) throw new Error('未知零件 id: ' + id);
+  m.userData.partId = id; p.meshes.push(m);
+  for (const x of (Array.isArray(m.material) ? m.material : [m.material])) p.mats.add(x);
+  pickables.push(m);
+}
+function addMesh(parent, geo, mat, partId, o = {}) {
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = o.cast !== false; m.receiveShadow = o.receive !== false;
+  if (o.pos) m.position.set(o.pos[0], o.pos[1], o.pos[2] || 0);
+  if (o.rotZ) m.rotation.z = o.rotZ;
+  parent.add(m);
+  if (partId) tagMesh(partId, m);
+  return m;
+}
+function addAnchor(partId, parent, x, y, z) {
+  const a = new THREE.Object3D(); a.position.set(x, y, z); parent.add(a); parts[partId].anchorObj = a; return a;
+}
+
+/* ---------- 随机 ---------- */
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ============================================================
+ *  纹理 (全部由 canvas 程序化生成)
+ * ============================================================ */
+const mkCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+function canvasTex(c, { srgb = false, wrap = true, aniso = 8 } = {}) {
+  const t = new THREE.CanvasTexture(c);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  if (wrap) t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = aniso; return t;
+}
+function heightToNormal(h, w, hh, strength) {
+  const c = mkCanvas(w, hh), g = c.getContext('2d'), img = g.createImageData(w, hh);
+  const at = (x, y) => h[((y + hh) % hh) * w + ((x + w) % w)];
+  for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) {
+    const dx = (at(x + 1, y) - at(x - 1, y)) * strength, dy = (at(x, y + 1) - at(x, y - 1)) * strength;
+    const inv = 1 / Math.hypot(dx, dy, 1), i = (y * w + x) * 4;
+    img.data[i] = (-dx * inv * 0.5 + 0.5) * 255; img.data[i + 1] = (dy * inv * 0.5 + 0.5) * 255; img.data[i + 2] = (inv * 0.5 + 0.5) * 255; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0); return c;
+}
+/* 日内瓦波纹 (Côtes de Genève) 法线贴图 */
+function genevaCanvas() {
+  const W = 256, H = 8, c = mkCanvas(W, H), g = c.getContext('2d'), img = g.createImageData(W, H);
+  for (let x = 0; x < W; x++) {
+    const nx = -0.42 * Math.cos(x / W * TAU), nz = Math.sqrt(1 - nx * nx);
+    for (let y = 0; y < H; y++) { const i = (y * W + x) * 4; img.data[i] = (nx * 0.5 + 0.5) * 255; img.data[i + 1] = 128; img.data[i + 2] = (nz * 0.5 + 0.5) * 255; img.data[i + 3] = 255; }
+  }
+  g.putImageData(img, 0, 0); return c;
+}
+/* 珠圆纹 (Perlage) 法线贴图 */
+function perlageCanvas() {
+  const S = 512, c = mkCanvas(S, S), g = c.getContext('2d'), rnd = mulberry32(11);
+  g.fillStyle = '#707070'; g.fillRect(0, 0, S, S);
+  for (let n = 0; n < 1100; n++) {
+    const x = rnd() * S, y = rnd() * S, r = 12 + rnd() * 7;
+    for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
+      const cx = x + ox, cy = y + oy;
+      if (cx + r < 0 || cx - r > S || cy + r < 0 || cy - r > S) continue;
+      const gr = g.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.05, cx, cy, r);
+      gr.addColorStop(0, 'rgb(255,255,255)'); gr.addColorStop(1, 'rgb(40,40,40)');
+      g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.fill();
+    }
+  }
+  const d = g.getImageData(0, 0, S, S).data, h = new Float32Array(S * S);
+  for (let i = 0; i < S * S; i++) h[i] = d[i * 4] / 255;
+  return heightToNormal(h, S, S, 2.6);
+}
+/* 拉丝纹理 (沿 u 方向的细条纹) */
+function brushedCanvas() {
+  const W = 8, H = 512, rnd = mulberry32(5), h = new Float32Array(W * H);
+  const row = new Float32Array(H); for (let y = 0; y < H; y++) row[y] = rnd();
+  for (let y = 0; y < H; y++) { const v = (row[y] * 0.6 + row[(y + 1) % H] * 0.25 + row[(y + H - 1) % H] * 0.15); for (let x = 0; x < W; x++) h[y * W + x] = v; }
+  return heightToNormal(h, W, H, 1.6);
+}
+
+/* ---------- 刻度环贴图 ---------- */
+function dialCanvas(jewels) {
+  const S = 2048, c = mkCanvas(S, S), g = c.getContext('2d'), cx = S / 2, s = S / 2 / RING_OUT;
+  const rnd = mulberry32(3);
+  g.fillStyle = '#12151b'; g.fillRect(0, 0, S, S);
+  // 日光放射纹
+  g.lineWidth = 1;
+  for (let i = 0; i < 3600; i++) {
+    const a = rnd() * TAU, r0 = RING_IN - 0.3, r1 = RING_OUT + 0.1;
+    g.strokeStyle = `rgba(255,255,255,${0.006 + rnd() * 0.028})`;
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * r0 * s, cx - Math.sin(a) * r0 * s); g.lineTo(cx + Math.cos(a) * r1 * s, cx - Math.sin(a) * r1 * s); g.stroke();
+  }
+  const ring = (r, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cx, r * s, 0, TAU); g.stroke(); };
+  ring(RING_IN + 0.13, 2, 'rgba(216,178,106,0.85)'); ring(RING_OUT - 0.14, 2, 'rgba(216,178,106,0.7)'); ring(16.45, 1.4, 'rgba(230,226,214,0.45)');
+  // 分钟刻度
+  for (let i = 0; i < 60; i++) {
+    const a = Math.PI / 2 - i / 60 * TAU, big = i % 5 === 0, r0 = big ? 16.62 : 16.82, r1 = 17.16;
+    g.strokeStyle = big ? '#eadfc4' : 'rgba(234,228,214,0.85)'; g.lineWidth = big ? 5 : 2.6; g.lineCap = 'butt';
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * r0 * s, cx - Math.sin(a) * r0 * s); g.lineTo(cx + Math.cos(a) * r1 * s, cx - Math.sin(a) * r1 * s); g.stroke();
+  }
+  // 文字 (逐字距排版)
+  const txt = (str, x, y, size, sp, col, weight = 600) => {
+    g.font = `${weight} ${size}px "Cormorant Garamond","Didot","Bodoni MT","Noto Serif SC","Songti SC",Georgia,serif`;
+    g.fillStyle = col; g.textBaseline = 'middle';
+    let w = 0; for (const ch of str) w += g.measureText(ch).width + sp; w -= sp;
+    let px = x - w / 2; g.textAlign = 'left';
+    for (const ch of str) { g.fillText(ch, px, y); px += g.measureText(ch).width + sp; }
+  };
+  txt('AURELIUS', cx, cx - 13.98 * s, 36, 9, '#dcc48c');
+  txt(jewels + ' JEWELS', cx, cx + 13.98 * s, 24, 6, 'rgba(226,221,208,0.8)', 500);
+  txt('A-21', cx + 13.98 * s, cx, 22, 4, 'rgba(226,221,208,0.6)', 500);
+  txt('HAND-WOUND', cx - 13.98 * s, cx, 20, 3, 'rgba(226,221,208,0.6)', 500);
+  return c;
+}
+/* 刻度环的夜光自发光贴图：仅 5 分钟刻度发光 (黑底白刻度) */
+function dialLumeCanvas() {
+  const S = 2048, c = mkCanvas(S, S), g = c.getContext('2d'), cx = S / 2, s = S / 2 / RING_OUT;
+  g.fillStyle = '#000'; g.fillRect(0, 0, S, S); g.strokeStyle = '#fff'; g.lineWidth = 5; g.lineCap = 'butt';
+  for (let i = 0; i < 60; i += 5) {
+    const a = Math.PI / 2 - i / 60 * TAU;
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * 16.66 * s, cx - Math.sin(a) * 16.66 * s); g.lineTo(cx + Math.cos(a) * 17.12 * s, cx - Math.sin(a) * 17.12 * s); g.stroke();
+  }
+  return c;
+}
+function subdialCanvas() {
+  const S = 512, c = mkCanvas(S, S), g = c.getContext('2d'), cx = S / 2, s = S / 2 / 3.3;
+  g.fillStyle = '#12151b'; g.fillRect(0, 0, S, S);
+  g.strokeStyle = 'rgba(216,178,106,0.9)'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cx, 2.42 * s, 0, TAU); g.stroke();
+  for (let i = 0; i < 60; i++) {
+    const a = Math.PI / 2 - i / 60 * TAU, big = i % 5 === 0, r0 = big ? 2.68 : 2.86, r1 = 3.08;
+    g.strokeStyle = '#eadfc4'; g.lineWidth = big ? 3.4 : 1.6;
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * r0 * s, cx - Math.sin(a) * r0 * s); g.lineTo(cx + Math.cos(a) * r1 * s, cx - Math.sin(a) * r1 * s); g.stroke();
+  }
+  g.font = '600 15px Georgia,serif'; g.fillStyle = '#e9dcbc'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  [[15, '15'], [30, '30'], [45, '45'], [60, '60']].forEach(([m, t]) => { const a = Math.PI / 2 - m / 60 * TAU, r = 2.56; if (m !== 60) g.fillText(t, cx + Math.cos(a) * r * s, cx - Math.sin(a) * r * s + 1); });
+  return c;
+}
+
+/* ============================================================
+ *  几何工具
+ * ============================================================ */
+function extrude(shapes, z0, z1, bevel = 0.03, curve = 6) {
+  const b = Math.min(bevel, (z1 - z0) * 0.34);
+  const geo = new THREE.ExtrudeGeometry(shapes, {
+    depth: Math.max(1e-3, z1 - z0 - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelOffset: -b,
+    bevelSegments: 1, curveSegments: curve, steps: 1,
+  });
+  geo.translate(0, 0, z0 + b); return geo;
+}
+function cylZ(r, z0, z1, seg = 24, rTop = r) {
+  const g = new THREE.CylinderGeometry(rTop, r, z1 - z0, seg, 1); g.rotateX(Math.PI / 2); g.translate(0, 0, (z0 + z1) / 2); return g;
+}
+function cylX(r, x0, x1, seg = 24, rEnd = r) {
+  const g = new THREE.CylinderGeometry(rEnd, r, x1 - x0, seg, 1); g.rotateZ(-Math.PI / 2); g.translate((x0 + x1) / 2, 0, 0); return g;
+}
+const BASIS_YZX = new THREE.Matrix4().makeBasis(V3(0, 1, 0), V3(0, 0, 1), V3(1, 0, 0)); // 局部 (x,y,z) → 世界 (Y,Z,X)
+function mergeGeos(list) {
+  const arr = list.map(g => { const n = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(n.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'uv') n.deleteAttribute(k); return n; });
+  const out = mergeGeometries(arr, false);
+  if (!out) throw new Error('mergeGeometries 失败：属性不一致 (' + arr.length + ' 个几何)');
+  return out;
+}
+function circlePts(cx, cy, r, n = 64) { const p = []; for (let i = 0; i < n; i++) { const a = i / n * TAU; p.push(V2(cx + r * Math.cos(a), cy + r * Math.sin(a))); } return p; }
+const circleShape = (cx, cy, r, n = 64) => new THREE.Shape(circlePts(cx, cy, r, n));
+const circlePath = (cx, cy, r, n = 64) => new THREE.Path(circlePts(cx, cy, r, n));
+function rrShape(w, h, r, cx = 0, cy = 0) {
+  const s = new THREE.Shape(), x = cx - w / 2, y = cy - h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s;
+}
+/* 对称轮廓：halfPts=[[半宽, y]...] 自下而上，最后一点半宽应为 0 (针尖) 或收口 */
+function symPts(half) {
+  const R = half.map(p => V2(p[0], p[1])), L = half.slice().reverse().filter(p => p[0] > 1e-9).map(p => V2(-p[0], p[1]));
+  return R.concat(L);   // 轴上的点只出现一次，避免零长度边
+}
+function shapesFromSDF(f, x0, y0, x1, y1, step, tol) {
+  return classifyLoops(marchLoops(f, x0, y0, x1, y1, step, tol)).map(g => {
+    const s = new THREE.Shape(toV2(g.outer)); for (const h of g.holes) s.holes.push(new THREE.Path(toV2(h))); return s;
+  });
+}
+
+/* ---------- 齿轮 ---------- */
+function gearOutline(N, m) {
+  const P = TAU / N, rp = m * N / 2, rt = rp + m * 0.95, rr = rp - m * 1.2, small = N <= 12;
+  const hr = (small ? 0.25 : 0.34) * P, hp = (small ? 0.16 : 0.235) * P, ht = (small ? 0.085 : 0.115) * P;
+  const pol = (a, r) => V2(r * Math.cos(a), r * Math.sin(a)), pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = i * P;
+    pts.push(pol(a - hr, rr), pol(a - hp, rp), pol(a - ht, rt), pol(a + ht, rt), pol(a + hp, rp), pol(a + hr, rr), pol(a + P / 2, rr));
+  }
+  return pts;
+}
+function sawOutline(N, rTip, rRoot) {
+  const P = TAU / N, pol = (a, r) => V2(r * Math.cos(a), r * Math.sin(a)), pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = i * P;
+    pts.push(pol(a - 0.86 * P, rRoot), pol(a - 0.5 * P, rRoot + (rTip - rRoot) * 0.33), pol(a - 0.2 * P, rRoot + (rTip - rRoot) * 0.72), pol(a, rTip), pol(a + 0.05 * P, rRoot), pol(a + 0.10 * P, rRoot));
+  }
+  return pts;
+}
+/* 辐条窗口 (可弯曲辐条)：把 hole 加到 shape */
+function addSpokeWindows(shape, o) {
+  const { n, r0, r1 } = o, sw = o.swirl || 0, w0 = o.w0 ?? 0.5, w1 = o.w1 ?? 0.34;
+  const k = o.k ?? clamp((r1 - r0) * 0.2, 0.06, 0.4), sec = TAU / n;
+  const f = (x, y) => {
+    const r = Math.hypot(x, y);
+    let a = Math.atan2(y, x) - sw * (r - r0);
+    a = ((a + sec / 2) % sec + sec) % sec - sec / 2;
+    const v = r * Math.sin(a), w = w0 + (w1 - w0) * clamp((r - r0) / (r1 - r0), 0, 1);
+    return smax(Math.max(r0 - r, r - r1), -(Math.abs(v) - w / 2), k);
+  };
+  const R = r1 + 0.3;
+  for (const l of marchLoops(f, -R, -R, R, R, Math.max(0.028, r1 / 95), 0.003)) shape.holes.push(new THREE.Path(toV2(l)));
+}
+function wheelGeo(o) {
+  const shape = new THREE.Shape(gearOutline(o.N, o.m)), rr = o.m * o.N / 2 - o.m * 1.2;
+  if (o.spokes) addSpokeWindows(shape, { n: o.spokes, r0: o.hub, r1: rr - o.rim, swirl: o.swirl, w0: o.w0, w1: o.w1, k: o.k });
+  return extrude([shape], o.z[0], o.z[1], o.bevel ?? Math.min(0.026, o.m * 0.2), 4);
+}
+function pinionGeo(g, z) { return extrude([new THREE.Shape(gearOutline(g.N, g.m))], z[0], z[1], Math.min(0.02, g.m * 0.15), 3); }
+/* 擒纵轮：棘齿式，齿尖朝逆时针 */
+function escWheelGeo(z) {
+  const N = G.escN, P = TAU / N, R = ESC.R, rr = R - 0.42, dR = R - rr, pol = (a, r) => V2(r * Math.cos(a), r * Math.sin(a)), pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = i * P;
+    pts.push(pol(a - 0.74 * P, rr), pol(a - 0.42 * P, rr + 0.30 * dR), pol(a - 0.14 * P, rr + 0.78 * dR), pol(a, R), pol(a + 0.03 * P, rr + 0.55 * dR), pol(a + 0.06 * P, rr), pol(a + 0.16 * P, rr));
+  }
+  const shape = new THREE.Shape(pts);
+  addSpokeWindows(shape, { n: 5, r0: 0.55, r1: rr - 0.3, swirl: 0.32, w0: 0.36, w1: 0.22, k: 0.12 });
+  return extrude([shape], z[0], z[1], 0.02, 3);
+}
+/* ---------- 螺丝 / 宝石 (InstancedMesh) ---------- */
+let _screwG, _slotG, _chatonG, _rubyG;
+function initInstGeos() {
+  const r = 0.5, h = 0.24;
+  _screwG = new THREE.LatheGeometry([V2(0, 0), V2(r, 0), V2(r, h * 0.55), V2(r * 0.9, h * 0.86), V2(r * 0.7, h), V2(0, h)], 20); _screwG.rotateX(Math.PI / 2);
+  _slotG = new THREE.BoxGeometry(r * 1.5, r * 0.22, 0.05);
+  _chatonG = new THREE.LatheGeometry([V2(0.5, 0), V2(0.98, 0), V2(0.98, 0.09), V2(0.84, 0.17), V2(0.5, 0.17), V2(0.5, 0)], 28); _chatonG.rotateX(Math.PI / 2);
+  _rubyG = new THREE.SphereGeometry(0.5, 22, 10, 0, TAU, 0, Math.PI / 2); _rubyG.scale(1, 0.42, 1); _rubyG.rotateX(Math.PI / 2);
+}
+const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
+function instanced(parent, geo, mat, list, partId, cast = true) {
+  const im = new THREE.InstancedMesh(geo, mat, list.length);
+  list.forEach((it, i) => {
+    _q.setFromAxisAngle(Z_AXIS, it.rot || 0);
+    if (it.flip) { _q2.setFromAxisAngle(X_AXIS, Math.PI); _q.premultiply(_q2); }   // 绕 X 转 180°：朝 -z，且不翻转面片
+    _s.set(it.s || 1, it.s || 1, it.sz || it.s || 1); _p.set(it.x, it.y, it.z);
+    _m4.compose(_p, _q, _s); im.setMatrixAt(i, _m4);
+  });
+  im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; im.castShadow = cast; im.receiveShadow = true;
+  parent.add(im); if (partId) tagMesh(partId, im); return im;
+}
+const JEWELS = { count: 0 };
+function addScrews(parent, list, z, s = 1) {
+  const rnd = mulberry32(list.length * 13 + Math.round(z * 10));
+  const a = list.map(p => ({ x: p.x, y: p.y, z, s: (p.s || 1) * s, rot: rnd() * TAU }));
+  const b = a.map(p => ({ x: p.x, y: p.y, z: z + 0.24 * p.s + 0.004, s: p.s, rot: p.rot }));
+  instanced(parent, _screwG, MAT.screw, a, 'screws');
+  instanced(parent, _slotG, MAT.slot, b, 'screws', false);
+}
+/* 宝石：金套 + 红宝石；dir=+1 朝 +z (前侧)，-1 朝 -z (背侧) */
+function addJewels(parent, list, dir = 1) {
+  const flip = dir < 0;
+  const ring = list.map(p => ({ x: p.x, y: p.y, z: p.z, s: p.s || 1, flip }));
+  const ruby = list.map(p => ({ x: p.x, y: p.y, z: p.z + dir * 0.13 * (p.s || 1), s: (p.s || 1) * 0.86, flip }));
+  instanced(parent, _chatonG, MAT.gold2, ring, 'jewels');
+  instanced(parent, _rubyG, MAT.ruby, ruby, 'jewels');
+  JEWELS.count += list.length + list.filter(p => p.cap).length;
+}
+
+/* ============================================================
+ *  材质
+ * ============================================================ */
+const MAT = {};
+function initMaterials() {
+  MAT.gold = () => phys({ color: 0xf1c672, metalness: 1, roughness: 0.2, clearcoat: 0.25, clearcoatRoughness: 0.18 }, 1.2);
+  MAT.gold2 = phys({ color: 0xf6d489, metalness: 1, roughness: 0.14 }, 1.3);
+  MAT.rose = () => phys({ color: 0xf0ae8c, metalness: 1, roughness: 0.2, clearcoat: 0.25, clearcoatRoughness: 0.18 }, 1.2);
+  MAT.rhod = () => std({ color: 0xdfe1e6, metalness: 1, roughness: 0.2 }, 1.1);
+  MAT.steel = () => std({ color: 0xcdd1d8, metalness: 1, roughness: 0.15 }, 1.15);
+  MAT.polish = () => std({ color: 0xeceef2, metalness: 1, roughness: 0.07 }, 1.2);
+  MAT.dark = () => std({ color: 0x6a7079, metalness: 1, roughness: 0.42 }, 1.0);
+  MAT.blue = () => std({ color: 0x2b47a8, metalness: 1, roughness: 0.26 }, 1.3);
+  MAT.spring = () => std({ color: 0x9db0da, metalness: 1, roughness: 0.24 }, 1.3);
+  MAT.screw = std({ color: 0x2f4dbb, metalness: 1, roughness: 0.22 }, 1.4);
+  MAT.slot = std({ color: 0x06070a, metalness: 0.2, roughness: 0.5 }, 0.5);
+  MAT.ruby = phys({ color: 0xd3112d, metalness: 0, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.03, emissive: 0x610510, emissiveIntensity: 0.6, ior: 1.76 }, 1.8);
+  MAT.black = () => std({ color: 0x0f1013, metalness: 0.4, roughness: 0.45 }, 0.8);
+  MAT.lume = () => { const m = phys({ color: 0xcfe6c2, metalness: 0, roughness: 0.55, emissive: 0x86ffc4, emissiveIntensity: 0.2 }, 0.6); m.userData.lume = true; return m; };
+}
+function genevaMat(rot, color = 0xd9dce1, rough = 0.3) {
+  const t = canvasTex(genevaCanvas()); t.repeat.set(1 / 0.55, 1 / 0.55); t.rotation = rot;
+  return std({ color, metalness: 1, roughness: rough, normalMap: t, normalScale: V2(0.75, 0.75) }, 1.15);
+}
+
+/* ============================================================
+ *  弹簧 / 游丝 / 叉
+ * ============================================================ */
+/* 主发条：w∈[0,1] 为上紧程度。带状螺旋 = 外圈紧贴桶壁 + 过渡 S 段 + 内圈紧绕轴 */
+function springGeo(w) {
+  const t = 0.14, z0 = Z.spring[0], z1 = Z.spring[1], ra = 1.2, Rw = 5.3;
+  const nOut = lerp(11, 5, w), nIn = lerp(3, 12, w);
+  const rA = Rw - t * nOut, rB = ra + t * nIn, delta = 1.5 * Math.PI;
+  const phA = nOut * TAU, phB = phA + delta, phEnd = phB + nIn * TAU;
+  const rOf = ph => ph <= phA ? Rw - t * ph / TAU : ph <= phB ? rA + (rB - rA) * smoother((ph - phA) / delta) : rB - t * (ph - phB) / TAU;
+  const step = 0.07, n = Math.ceil(phEnd / step), pts = [];
+  for (let i = 0; i <= n; i++) { const ph = Math.min(phEnd, i * step), r = rOf(ph); pts.push([r * Math.cos(ph), r * Math.sin(ph)]); }
+  const pos = [], nor = [], idx = [];
+  const push = (x, y, z, nx, ny, nz) => { pos.push(x, y, z); nor.push(nx, ny, nz); };
+  for (let i = 0; i <= n; i++) {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n, i + 1)];
+    let tx = b[0] - a[0], ty = b[1] - a[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+    const nx = ty, ny = -tx, c = pts[i], ox = c[0] + nx * t / 2, oy = c[1] + ny * t / 2, ix = c[0] - nx * t / 2, iy = c[1] - ny * t / 2;
+    push(ox, oy, z0, nx, ny, 0); push(ox, oy, z1, nx, ny, 0);            // 外壁 0,1
+    push(ix, iy, z0, -nx, -ny, 0); push(ix, iy, z1, -nx, -ny, 0);        // 内壁 2,3
+    push(ix, iy, z1, 0, 0, 1); push(ox, oy, z1, 0, 0, 1);                // 顶面 4,5
+    push(ix, iy, z0, 0, 0, -1); push(ox, oy, z0, 0, 0, -1);              // 底面 6,7
+  }
+  for (let i = 0; i < n; i++) {
+    const a = i * 8, b = (i + 1) * 8;
+    idx.push(a, b, a + 1, a + 1, b, b + 1);                // 外壁
+    idx.push(a + 2, a + 3, b + 2, a + 3, b + 3, b + 2);    // 内壁
+    idx.push(a + 4, b + 4, a + 5, a + 5, b + 4, b + 5);    // 顶
+    idx.push(a + 6, a + 7, b + 6, a + 7, b + 7, b + 6);    // 底
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setIndex(idx);
+  return g;
+}
+/* 游丝：阿基米德螺旋细管；扭转/呼吸在着色器里完成 */
+const HS = { r0: 0.95, r1: 3.45, turns: 13 + 70 / 360, wire: 0.048 };
+const hsU = { uTheta: { value: 0 }, uR0: { value: HS.r0 }, uR1: { value: HS.r1 } };
+function hairspringGeo() {
+  const n = Math.floor(HS.turns * 56), seg = 5, pos = [], nor = [], idx = [];
+  for (let i = 0; i <= n; i++) {
+    const f = i / n, ph = f * HS.turns * TAU, r = HS.r0 + (HS.r1 - HS.r0) * f;
+    const c = Math.cos(ph), s = Math.sin(ph);
+    for (let j = 0; j < seg; j++) {
+      const a = j / seg * TAU, nx = Math.cos(a) * c, ny = Math.cos(a) * s, nz = Math.sin(a);
+      pos.push((r + Math.cos(a) * HS.wire) * c, (r + Math.cos(a) * HS.wire) * s, Math.sin(a) * HS.wire); nor.push(nx, ny, nz);
+    }
+  }
+  for (let i = 0; i < n; i++) for (let j = 0; j < seg; j++) {
+    const a = i * seg + j, b = i * seg + (j + 1) % seg, c = (i + 1) * seg + j, d = (i + 1) * seg + (j + 1) % seg;
+    idx.push(a, c, b, b, c, d);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setIndex(idx);
+  return g;
+}
+function hairspringMat() {
+  const m = std({ color: 0x86a0e4, metalness: 1, roughness: 0.22, emissive: 0x0b1a44, emissiveIntensity: 0.6 }, 1.5);
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, hsU);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uTheta; uniform float uR0; uniform float uR1;')
+      .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
+        float hs_s = clamp((length(position.xy) - uR0) / (uR1 - uR0), 0.0, 1.0);
+        float hs_a = uTheta * (1.0 - hs_s);
+        float hs_c = cos(hs_a), hs_n = sin(hs_a);
+        objectNormal.xy = mat2(hs_c, hs_n, -hs_n, hs_c) * objectNormal.xy;`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        transformed.xy = mat2(hs_c, hs_n, -hs_n, hs_c) * transformed.xy * (1.0 + 0.055 * (uTheta / 4.712) * sin(3.14159 * hs_s));`);
+  };
+  m.customProgramCacheKey = () => 'hairspring-v1';
+  return m;
+}
+/* 擒纵叉 (叉坐标系：叉轴 = 原点，+x 指向摆轮；擒纵轮心位于 (-d, 0))
+   叉臂沿切线放在擒纵轮齿尖圆之外，只有红宝石叉瓦伸入齿圈。 */
+const STONE_T = 0.22;   // 叉瓦沿切向的偏移 (使锁止面恰好贴住齿尖)
+function forkStoneCenter(sgn) {
+  const a = sgn * 30 * DEG, rr = ESC.R + 0.36;
+  return { x: -ESC.d + rr * Math.cos(a) - STONE_T * Math.sin(a), y: rr * Math.sin(a) + STONE_T * Math.cos(a), a };
+}
+function forkSDF() {
+  const S1 = forkStoneCenter(1), S2 = forkStoneCenter(-1);
+  const O = { x: 0, y: 0 }, tail = { x: 2.55, y: 0 }, mid = { x: 1.7, y: 0 };
+  // 冲击销在叉本体坐标系中的扫掠轨迹：叉口 = 该轨迹的包络 (销半径 0.15 + 0.03 间隙) → 构造上不会穿模
+  const sweep = [];
+  for (let d = -85; d <= 85; d += 0.4) {
+    const th = d * DEG, psi = forkPsi(th), px = ESC.L - ESC.rp * Math.cos(th), py = -ESC.rp * Math.sin(th);
+    sweep.push(px * Math.cos(-psi) - py * Math.sin(-psi), px * Math.sin(-psi) + py * Math.cos(-psi));
+  }
+  const sweepD = (x, y) => { let m = 1e9; for (let i = 0; i < sweep.length; i += 2) m = Math.min(m, (x - sweep[i]) ** 2 + (y - sweep[i + 1]) ** 2); return Math.sqrt(m); };
+  return (x, y) => {
+    let f = sdCapsule(x, y, O, S1, 0.24, 0.17);
+    f = smin(f, sdCapsule(x, y, O, S2, 0.24, 0.17), 0.18);
+    f = smin(f, sdCapsule(x, y, O, mid, 0.24, 0.3), 0.22);
+    f = smin(f, sdCapsule(x, y, mid, tail, 0.3, 0.34), 0.2);
+    if (x > 2.2) f = smax(f, -(sweepD(x, y) - 0.18), 0.02);                             // 叉口：销轨迹包络
+    return smax(f, -(Math.hypot(x - 1.05, y) - 0.2), 0.03);                             // 配重镂空窗
+  };
+}
+
+/* ============================================================
+ *  PARTS · 零件目录 (名称 / 说明 / 规格 / 分类)
+ * ============================================================ */
+const CAT = {
+  case: { zh: '外壳', color: '#9fb8dc' }, disp: { zh: '指针与刻度', color: '#ecd9a4' }, power: { zh: '动力', color: '#ffb066' },
+  train: { zh: '传动', color: '#e6b866' }, reg: { zh: '调速', color: '#86d4ff' }, esc: { zh: '擒纵', color: '#7ee0c6' },
+  frame: { zh: '夹板结构', color: '#cfd4dc' }, wind: { zh: '上链与调时', color: '#ff9a8a' }, small: { zh: '宝石与螺丝', color: '#ff6b7f' },
+};
+const rpmTxt = (perHour) => perHour >= 60 ? (perHour / 60).toFixed(perHour % 60 ? 1 : 0) + ' 转/分钟' : perHour >= 1 ? perHour.toFixed(perHour % 1 ? 2 : 0) + ' 转/小时' : '';
+const PART_DEFS = [
+  { id: 'crystal', node: 'crystal', cat: 'case', zh: '蓝宝石水晶玻璃', en: 'Sapphire Crystal',
+    desc: '合成蓝宝石晶体，莫氏硬度 9，仅次于钻石，几乎不会被刮花。穹顶弧面配合双面防反射镀膜，让镂空机芯毫无遮挡地呈现在眼前，同时在斜射光下留下柔和的高光。',
+    specs: [['材质', '合成蓝宝石 (Al₂O₃)'], ['硬度', '莫氏 9'], ['厚度', '1.4 mm，微穹顶'], ['镀膜', '双面多层防反射']] },
+  { id: 'bezel', node: 'bezel', cat: 'case', zh: '表圈', en: 'Fluted Bezel',
+    desc: '316L 精钢表圈，外缘开有 72 道细密凹槽（coin-edge），在光线下会形成一圈流动的高光；内缘倒角镜面抛光，压住蓝宝石玻璃。',
+    specs: [['材质', '316L 精钢'], ['外缘', '72 道凹槽'], ['工艺', '镜面抛光 + 倒角'], ['高度', '1.2 mm']] },
+  { id: 'case', node: 'case', cat: 'case', zh: '表壳', en: 'Case Middle & Lugs',
+    desc: '316L 精钢中层表壳，侧面为横向拉丝、边缘为镜面倒角，形成经典的“拉丝 + 抛光”对比。弯曲表耳保证佩戴贴合，内衬深色机芯圈遮住夹板边缘。',
+    specs: [['直径', '42 mm'], ['材质', '316L 精钢'], ['表面', '拉丝侧面 / 抛光倒角'], ['表耳间距', '20 mm'], ['防水', '50 米']] },
+  { id: 'crown', node: 'crown', cat: 'wind', zh: '表冠', en: 'Crown',
+    desc: '滚花精钢表冠，用于上链与拨针。旋转表冠时，经立轴与上链小轮带动龙头轮、棘轮，把动力压入发条盒。',
+    specs: [['直径', '6.3 mm'], ['滚花', '24 齿'], ['材质', '316L 精钢'], ['功能', '上链 / 拨针']] },
+  { id: 'caseback', node: 'caseback', cat: 'case', zh: '透底后盖', en: 'Display Caseback',
+    desc: '精钢后盖中央嵌入蓝宝石玻璃，从背面同样可以欣赏夹板上的珠圆纹与红宝石轴承。六颗螺丝固定，保证防水密封。',
+    specs: [['玻璃', '蓝宝石，1.0 mm'], ['固定', '6 颗六角螺丝'], ['材质', '316L 精钢']] },
+  { id: 'hourhand', node: 'hourhand', cat: 'disp', zh: '时针', en: 'Hour Hand',
+    desc: '剑形镂空时针，抛光精钢边框中嵌入 Super-LumiNova 夜光涂层。由时轮管带动，每 12 小时转一圈。',
+    specs: [['形状', '剑形，镂空'], ['夜光', 'Super-LumiNova C3'], ['转速', '1 转 / 12 小时']] },
+  { id: 'minhand', node: 'minhand', cat: 'disp', zh: '分针', en: 'Minute Hand',
+    desc: '细长的镂空分针，安装在中心轮轴的卡口管 (cannon pinion) 上，与中心轮以摩擦相连——因此拨针时分针可以脱开轮系自由转动。',
+    specs: [['形状', '剑形，镂空'], ['夜光', 'Super-LumiNova C3'], ['转速', '1 转 / 小时']] },
+  { id: 'sechand', node: 'sechand', cat: 'disp', zh: '小秒针', en: 'Small Seconds Hand',
+    desc: '蓝钢小秒针固定在四号轮轴上。由于 21,600 次/小时的振频，秒针每秒“跳” 6 次，是最直观的走时证据。',
+    specs: [['位置', '9 点钟'], ['材质', '热蓝钢'], ['步进', '6 拍 / 秒']] },
+  { id: 'dial', node: 'dial', cat: 'disp', zh: '刻度环与夜光时标', en: 'Chapter Ring & Lume Indices',
+    desc: '镂空表盘只保留一圈外环：日光放射纹底面印有分钟刻度，12 枚立体时标以抛光精钢镶框，内嵌夜光。整圈由六根立柱固定在夹板上。',
+    specs: [['时标', '12 枚立体夜光'], ['刻度', '60 分钟刻度'], ['工艺', '日光放射纹 + 印刷'], ['固定', '6 立柱']] },
+  { id: 'subdial', node: 'subdial', cat: 'disp', zh: '小秒盘', en: 'Sub-seconds Track',
+    desc: '9 点钟位置的小秒盘，只是一枚镂空的刻度圈，让四号轮和它的轮辐从中心露出。',
+    specs: [['刻度', '60 秒'], ['直径', '6.6 mm'], ['固定', '3 立柱']] },
+  { id: 'barrel', node: 'barrel', cat: 'power', zh: '主发条盒', en: 'Mainspring Barrel',
+    desc: `发条盒是整个机芯的“电池”。外缘 ${G.barrel.N} 齿的齿轮驱动中心轮小齿轴，转速极慢——约 8 小时才转一圈。这里刻意去掉了盒盖，让你能直接看到里面的发条。`,
+    specs: [['齿数', `${G.barrel.N} 齿，模数 ${G.barrel.m}`], ['节圆直径', (2 * pitchR(G.barrel)).toFixed(1) + ' mm'], ['转速', '1 转 / 8 小时'], ['材质', '镀金黄铜'], ['结构', '开放式（无盖）']] },
+  { id: 'spring', node: 'spring', cat: 'power', zh: '主发条', en: 'Mainspring',
+    desc: '一条蓝钢带绕成的螺旋弹簧，外端钩在桶壁，内端钩在发条盒轴。上链时越绕越紧、储存能量；走时则缓慢释放。此模型中的弹簧会随“上链”按钮实时变紧。',
+    specs: [['厚度', '0.14 mm'], ['可用圈数', '约 7 圈'], ['动力储备', '约 56 小时'], ['材质', '蓝钢 / 铁镍合金']] },
+  { id: 'ratchet', node: 'keyless', cat: 'wind', zh: '棘轮与棘爪', en: 'Ratchet Wheel & Click',
+    desc: '棘轮固定在发条盒轴顶端，锯齿形的齿被棘爪 (click) 卡住：上链时允许单向转动，松开表冠时又绝不倒转，保证发条不会反弹。',
+    specs: [['齿数', `${G.ratchet.N} 齿（锯齿）`], ['作用', '单向锁止'], ['材质', '镀金黄铜']] },
+  { id: 'crownw', node: 'keyless', cat: 'wind', zh: '龙头轮', en: 'Crown Wheel',
+    desc: '上链传动链中间的一环：由立轴上的上链小轮驱动，再带动棘轮，实现约 3.2 : 1 的减速——转 3 圈多表冠，发条盒轴才转 1 圈。',
+    specs: [['齿数', `${G.crownW.N} 齿`], ['传动', '小轮 → 龙头轮 → 棘轮'], ['材质', '镀玫瑰金']] },
+  { id: 'stem', node: 'keyless', cat: 'wind', zh: '立轴与上链小轮', en: 'Winding Stem & Pinion',
+    desc: '一根贯穿表壳的钢制立轴，外端连接表冠，内端的上链小轮与龙头轮啮合。',
+    specs: [['小轮齿数', `${G.windP.N} 齿`], ['直径', '1.1 mm'], ['材质', '不锈钢']] },
+  { id: 'cwheel', node: 'cwheel', cat: 'train', zh: '中心轮', en: 'Center Wheel',
+    desc: `位于机芯正中，带动分针。每小时精确转 1 圈：${G.cWheel.N} 齿的轮片被发条盒经 ${G.cPin.N} 叶小齿轴驱动，再以小齿轴带动三号轮。玫瑰金轮辐经过弧形镂空。`,
+    specs: [['齿数', `${G.cWheel.N} 齿 / 小齿轴 ${G.cPin.N} 叶`], ['转速', '1 转 / 小时'], ['材质', '镀玫瑰金'], ['辐条', '5 根弯辐']] },
+  { id: 'twheel', node: 'twheel', cat: 'train', zh: '三号轮', en: 'Third Wheel',
+    desc: `中间传动轮。${G.tWheel.N} 齿的轮片与四号轮小齿轴啮合，转速为每小时 8 圈，起到承上启下的升速作用。`,
+    specs: [['齿数', `${G.tWheel.N} 齿 / 小齿轴 ${G.tPin.N} 叶`], ['转速', '8 转 / 小时'], ['材质', '镀金黄铜']] },
+  { id: 'f4wheel', node: 'f4wheel', cat: 'train', zh: '四号轮（秒轮）', en: 'Fourth (Seconds) Wheel',
+    desc: `轴端伸出表盘，驱动小秒针，每分钟转 1 圈。它的 ${G.f4Wheel.N} 齿轮片直接驱动擒纵轮小齿轴，是整个轮系中承受最高转速的一级传动。`,
+    specs: [['齿数', `${G.f4Wheel.N} 齿 / 小齿轴 ${G.f4Pin.N} 叶`], ['转速', '1 转 / 分钟'], ['材质', '镀铑黄铜']] },
+  { id: 'esc', node: 'esc', cat: 'esc', zh: '擒纵轮', en: 'Escape Wheel',
+    desc: `${G.escN} 个棘齿的擒纵轮是能量的“闸门”：每个拍子它前进半个齿距（12°），并通过齿面把一小份冲量推给擒纵叉，再传到摆轮。它在走时中呈现明显的“走—停—走”节奏。`,
+    specs: [['齿数', `${G.escN} 齿（瑞士棘齿式）`], ['步进', '12° / 拍'], ['转速', '12 转 / 分钟'], ['材质', '镀金 / 镍磷合金']] },
+  { id: 'fork', node: 'fork', cat: 'esc', zh: '擒纵叉', en: 'Pallet Fork',
+    desc: '杠杆式擒纵机构的核心。两块红宝石叉瓦交替锁住、释放擒纵轮的齿；叉尾的叉口被摆轮上的红宝石冲击销拨动，每次摆动约 ±6°，锁止深度约 0.14 mm。',
+    specs: [['叉瓦', '2 颗红宝石'], ['摆角', '±6°'], ['锁止深度', (ESC.stoneL * ESC.phi).toFixed(2) + ' mm'], ['材质', '镀铑钢']] },
+  { id: 'balance', node: 'balance', cat: 'reg', zh: '摆轮', en: 'Balance Wheel',
+    desc: '机械表的“心脏”。三根轮辐的镀金摆轮以 3 Hz 频率往复摆动，摆幅约 270°；轮缘上 16 颗调校螺丝用于调整转动惯量；下方双圆盘上的红宝石冲击销负责与擒纵叉“对话”。',
+    specs: [['直径', '8.8 mm'], ['振频', '21,600 次/小时 (3 Hz)'], ['摆幅', '≈ 270°'], ['调校螺丝', '16 颗'], ['材质', '镀金铜铍合金']] },
+  { id: 'hair', node: 'hair', cat: 'reg', zh: '游丝', en: 'Hairspring',
+    desc: '一根比头发还细的蓝钢螺旋弹簧（线径 0.1 mm）。它为摆轮提供回复力，与摆轮的转动惯量共同决定振频。摆轮往复摆动时，游丝会一圈圈地收紧和放松，即所谓“呼吸”。',
+    specs: [['圈数', '≈ 13.2 圈'], ['线径', '0.1 mm'], ['材质', '蓝钢 / 铁镍合金'], ['外端', '固定于游丝桩']] },
+  { id: 'cock', node: 'cock', cat: 'frame', zh: '摆轮夹板', en: 'Balance Cock',
+    desc: '三足悬臂式的摆轮夹板，中央嵌有红宝石与镜面盖石，固定摆轮上端轴尖。上方的快慢针（regulator）可以微调游丝有效长度，从而调快慢。',
+    specs: [['结构', '三足悬臂'], ['表面', '日内瓦波纹 + 倒角'], ['材质', '镀铑黄铜'], ['附件', '快慢针']] },
+  { id: 'barrelbr', node: 'barrelbr', cat: 'frame', zh: '发条盒夹板', en: 'Barrel Bridge',
+    desc: '压住发条盒轴的夹板，两条弧形长臂伸向表圈下方固定，另一条短臂承载龙头轮的支柱。边缘经手工倒角抛光 (anglage)。',
+    specs: [['表面', '日内瓦波纹'], ['倒角', '手工抛光'], ['材质', '镀铑黄铜']] },
+  { id: 'trainbr', node: 'trainbr', cat: 'frame', zh: '轮系夹板', en: 'Train Bridge',
+    desc: '覆盖中心轮、三号轮、四号轮轴端的主夹板，以红宝石轴承承接各轮上轴尖；同时也是时分轮系的立足平台。',
+    specs: [['支点', '3 颗红宝石'], ['表面', '日内瓦波纹'], ['材质', '镀铑黄铜']] },
+  { id: 'palletbr', node: 'palletbr', cat: 'frame', zh: '擒纵夹板', en: 'Pallet & Escape Bridge',
+    desc: '一枚小巧的夹板，同时压住擒纵轮与擒纵叉两根轴，两个红宝石孔的位置精度决定了擒纵系统的锁止深度。',
+    specs: [['支点', '2 颗红宝石'], ['附件', '2 枚限位钉'], ['材质', '镀铑黄铜']] },
+  { id: 'plate', node: 'plate', cat: 'frame', zh: '主夹板', en: 'Main Plate',
+    desc: '所有零件的“地基”。表面做珠圆纹 (perlage) 处理，并挖空成镂空造型；底面同样嵌有红宝石轴承，透过后盖玻璃可以看到。',
+    specs: [['直径', (2 * PLATE_R).toFixed(1) + ' mm'], ['厚度', '0.9 mm'], ['表面', '珠圆纹'], ['材质', '钌处理黄铜']] },
+  { id: 'motion', node: 'motion', cat: 'wind', zh: '时分轮系', en: 'Motion Works',
+    desc: '把中心轮的转动“分”出时针：卡口管 (10 齿) → 分轮 (40/10) → 时轮 (30 齿)，传动比正好 12 : 1。拨针时这一组轮系带着指针自由转动，与主轮系无关。',
+    specs: [['卡口管', `${G.cannon.N} 齿`], ['分轮', `${G.minW.N} 齿 / ${G.minP.N} 叶`], ['时轮', `${G.hourW.N} 齿`], ['传动比', '12 : 1']] },
+  { id: 'jewels', node: 'trainbr', cat: 'small', zh: '红宝石轴承', en: 'Ruby Jewels',
+    desc: '合成红宝石 (Al₂O₃ + 铬) 硬度极高、摩擦极小，被打磨成带孔的轴承，嵌在镀金套圈里，为高速旋转的轴尖提供几乎无磨损的支点。也用作叉瓦和冲击销。',
+    specs: [['材质', '合成红宝石'], ['数量', '—'], ['硬度', '莫氏 9'], ['套圈', '镀金']] },
+  { id: 'screws', node: 'trainbr', cat: 'small', zh: '蓝钢螺丝', en: 'Blued Steel Screws',
+    desc: '钢螺丝经 290 °C 热处理，表面形成一层薄氧化膜，呈现深邃的蓝色；螺丝头镜面抛光，开槽边缘倒角——传统制表业里最讲究的细节之一。',
+    specs: [['处理', '290 °C 热蓝'], ['头部', '镜面抛光'], ['数量', '—']] },
+];
+
+/* ============================================================
+ *  BUILD · 组装整只手表 (所有坐标 mm，+z 朝向表面)
+ * ============================================================ */
+const rot = {};      // 每帧要旋转的对象
+const anim = {};     // 需要更新的引用
+const SCREWS = { count: 0 };
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
+function initParts() {
+  for (const d of PART_DEFS) parts[d.id] = Object.assign({}, d, { meshes: [], mats: new Set(), hl: 0, anchorObj: null, specs: d.specs.map(s => s.slice()) });
+}
+const lumeN = () => MAT.lume();
+const rubyN = () => phys({ color: 0xd3112d, metalness: 0, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.03, emissive: 0x610510, emissiveIntensity: 0.6, ior: 1.76 }, 1.8);
+const grp = (parent, x, y, z = 0) => { const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); return g; };
+function screws(parent, list, z, s = 1) { addScrews(parent, list, z, s); SCREWS.count += list.length; }
+const mid = (a, b, t = 0.5) => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) });
+function arcPoint(a, b, bend, t) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+  const cx = mx - dy / l * bend, cy = my + dx / l * bend, u = 1 - t;
+  return { x: u * u * a.x + 2 * u * t * cx + t * t * b.x, y: u * u * a.y + 2 * u * t * cy + t * t * b.y };
+}
+function sdArc(x, y, c, r, a0, a1, hw) {
+  let a = Math.atan2(y - c.y, x - c.x); const mid = (a0 + a1) / 2; a = mid + wrapPi(a - mid);
+  a = clamp(a, a0, a1);
+  return Math.hypot(x - c.x - r * Math.cos(a), y - c.y - r * Math.sin(a)) - hw;
+}
+
+/* ---------- 夹板通用构造 ---------- */
+function makeBridge(o) {
+  const n = makeNode(o.node, o.dz);
+  const f = (x, y) => {
+    let d = 1e9;
+    for (const nd of o.nodes) d = smin(d, sdCircle(x, y, nd.p, nd.r), 0.5);
+    for (const a of o.arms) d = smin(d, a(x, y), 0.55);
+    return d;
+  };
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const nd of o.nodes) { x0 = Math.min(x0, nd.p.x - nd.r); x1 = Math.max(x1, nd.p.x + nd.r); y0 = Math.min(y0, nd.p.y - nd.r); y1 = Math.max(y1, nd.p.y + nd.r); }
+  const shapes = shapesFromSDF(f, x0 - 1.5, y0 - 1.5, x1 + 1.5, y1 + 1.5, 0.05, 0.003);
+  addMesh(n, extrude(shapes, o.z[0], o.z[1], 0.065, 4), genevaMat(o.tex), o.part);
+  const pil = (o.pillars || []).map(p => cylZ(0.8, 0.0, o.z[0] + 0.03, 20));
+  (o.pillars || []).forEach((p, i) => { pil[i].translate(p.x, p.y, 0); });
+  if (pil.length) addMesh(n, mergeGeos(pil), MAT.rhod(), o.part);
+  if (o.jewels && o.jewels.length) addJewels(n, o.jewels.map(p => ({ x: p.x, y: p.y, z: o.z[1] - 0.02, s: p.s || 1, cap: p.cap })), 1);
+  if (o.screws && o.screws.length) screws(n, o.screws, o.z[1], o.screwS || 1);
+  return n;
+}
+
+/* ============================================================
+ *  主夹板
+ * ============================================================ */
+function buildPlate() {
+  const n = makeNode('plate', 0), B = PL.B;
+  const win = [
+    (x, y) => sdCircle(x, y, { x: 7.8, y: -7.9 }, 3.4),
+    (x, y) => sdCapsule(x, y, { x: -5.2, y: 8.9 }, { x: -9.8, y: 5.0 }, 2.1, 1.6),
+    (x, y) => sdCircle(x, y, { x: 0.9, y: 10.4 }, 1.8),
+    (x, y) => {
+      let d = Math.max(sdCircle(x, y, B, 3.0), -sdCircle(x, y, B, 1.7));
+      for (let k = 0; k < 3; k++) { const a = (90 + k * 120) * DEG; d = Math.max(d, -sdCapsule(x, y, B, { x: B.x + 4 * Math.cos(a), y: B.y + 4 * Math.sin(a) }, 0.5, 0.5)); }
+      return d;
+    },
+  ];
+  const f = (x, y) => { let w = 1e9; for (const fn of win) w = smin(w, fn(x, y), 0.3); return smax(Math.hypot(x, y) - PLATE_R, -w, 0.16); };
+  const shapes = shapesFromSDF(f, -17, -17, 17, 17, 0.06, 0.004);
+  const tex = canvasTex(perlageCanvas()); tex.repeat.set(1 / 8, 1 / 8);
+  const mat = std({ color: 0x59606a, metalness: 1, roughness: 0.46, normalMap: tex, normalScale: V2(1.1, 1.1) }, 1.0);
+  addMesh(n, extrude(shapes, Z.plate[0], Z.plate[1], 0.08, 6), mat, 'plate');
+  // 立轴支座
+  addMesh(n, extrude([rrShape(3.5, 2.0, 0.6, 12.6, 0)], 0, 4.3, 0.06, 4), MAT.steel(), 'plate');
+  // 背面红宝石 (朝 -z)
+  const back = [PL.BAR, PL.C, PL.T, PL.F4, PL.E, PL.F, PL.W].map(p => ({ x: p.x, y: p.y, z: Z.plate[0] }));
+  back.push({ x: PL.B.x, y: PL.B.y, z: Z.plate[0], s: 1.15, cap: true });
+  addJewels(n, back, -1);
+  // 立柱 (刻度环用)
+  const ps = []; for (let k = 0; k < 6; k++) { const a = (15 + k * 60) * DEG, p = polar(PL.C, 15.0, a); ps.push(cylZ(0.45, 0, Z.ring[0] + 0.02, 14).translate(p.x, p.y, 0)); }
+  anim.dialPosts = mergeGeos(ps);
+}
+
+/* ============================================================
+ *  发条盒 + 主发条
+ * ============================================================ */
+function buildBarrel() {
+  const n = makeNode('barrel', 1.0), g = grp(n, PL.BAR.x, PL.BAR.y); rot.bar = g;
+  const shape = new THREE.Shape(gearOutline(G.barrel.N, G.barrel.m)); shape.holes.push(circlePath(0, 0, 5.32, 96));
+  addMesh(g, extrude([shape], Z.barrel[0], Z.barrel[1], 0.03, 4), MAT.gold(), 'barrel');
+  addMesh(g, extrude([circleShape(0, 0, 5.4, 96)], Z.barrel[0], Z.barrel[0] + 0.26, 0.03), MAT.rhod(), 'barrel');
+  // 桶口内缘的抛光环
+  const ring = circleShape(0, 0, 5.34, 96); ring.holes.push(circlePath(0, 0, 5.05, 96));
+  addMesh(g, extrude([ring], Z.barrel[1] - 0.06, Z.barrel[1] + 0.04, 0.02, 4), MAT.polish(), 'barrel');
+  g.rotation.z = TRAIN.bar.th0;
+  const sn = makeNode('spring', 3.4), sg = grp(sn, PL.BAR.x, PL.BAR.y); rot.spring = sg;
+  anim.spring = addMesh(sg, springGeo(0.7), MAT.spring(), 'spring');
+  addMesh(sg, cylZ(1.2, 0.5, 2.5, 48), MAT.steel(), 'spring');
+  sg.rotation.z = TRAIN.bar.th0;
+}
+
+/* ============================================================
+ *  轮系
+ * ============================================================ */
+function hubWasher(g, r, z, mat, part) { addMesh(g, cylZ(r + 0.14, z, z + 0.13, 32, r), mat, part); }
+function buildTrainWheels() {
+  let n, g;
+  // 中心轮 (玫瑰金) + 小齿轴 + 轴
+  n = makeNode('cwheel', 3.2); g = grp(n, PL.C.x, PL.C.y); rot.c = g;
+  addMesh(g, wheelGeo({ N: G.cWheel.N, m: G.cWheel.m, z: Z.cWheel, spokes: 6, hub: 0.95, rim: 0.42, swirl: 0.13, w0: 0.62, w1: 0.4 }), MAT.rose(), 'cwheel');
+  addMesh(g, pinionGeo(G.cPin, Z.cPin), MAT.steel(), 'cwheel');
+  addMesh(g, cylZ(0.3, -0.8, 4.4, 20), MAT.polish(), 'cwheel');
+  hubWasher(g, 0.95, Z.cWheel[1], MAT.polish(), 'cwheel');
+  g.rotation.z = TRAIN.c.th0;
+  // 三号轮
+  n = makeNode('twheel', 2.2); g = grp(n, PL.T.x, PL.T.y); rot.t = g;
+  addMesh(g, wheelGeo({ N: G.tWheel.N, m: G.tWheel.m, z: Z.tWheel, spokes: 5, hub: 0.72, rim: 0.34, swirl: -0.15, w0: 0.5, w1: 0.32 }), MAT.gold(), 'twheel');
+  addMesh(g, pinionGeo(G.tPin, Z.tPin), MAT.steel(), 'twheel');
+  addMesh(g, cylZ(0.28, -0.8, 4.4, 20), MAT.polish(), 'twheel');
+  hubWasher(g, 0.72, Z.tWheel[1], MAT.polish(), 'twheel');
+  g.rotation.z = TRAIN.t.th0;
+  // 四号轮
+  n = makeNode('f4wheel', 0.4); g = grp(n, PL.F4.x, PL.F4.y); rot.f4 = g;
+  addMesh(g, wheelGeo({ N: G.f4Wheel.N, m: G.f4Wheel.m, z: Z.f4Wheel, spokes: 6, hub: 0.62, rim: 0.3, swirl: 0.12, w0: 0.42, w1: 0.26 }), MAT.rhod(), 'f4wheel');
+  addMesh(g, pinionGeo(G.f4Pin, Z.f4Pin), MAT.steel(), 'f4wheel');
+  addMesh(g, cylZ(0.3, -0.8, 5.6, 20), MAT.polish(), 'f4wheel');
+  hubWasher(g, 0.62, Z.f4Wheel[1], MAT.polish(), 'f4wheel');
+  g.rotation.z = TRAIN.f4.th0;
+  // 擒纵轮
+  n = makeNode('esc', 1.6); g = grp(n, PL.E.x, PL.E.y); rot.e = g;
+  addMesh(g, pinionGeo(G.ePin, Z.ePin), MAT.steel(), 'esc');
+  addMesh(g, escWheelGeo(Z.esc), MAT.gold(), 'esc');
+  addMesh(g, cylZ(0.22, -0.8, 2.85, 16), MAT.polish(), 'esc');
+  hubWasher(g, 0.5, Z.esc[1], MAT.polish(), 'esc');
+  g.rotation.z = TRAIN.esc.th0;
+}
+
+/* ============================================================
+ *  擒纵叉 + 摆轮 + 游丝
+ * ============================================================ */
+function buildEscapement() {
+  // ---- 擒纵叉 ----
+  let n = makeNode('fork', 1.6), g = grp(n, PL.F.x, PL.F.y); rot.fork = g;
+  const shapes = shapesFromSDF(forkSDF(), -1.2, -1.9, 3.8, 1.9, 0.02, 0.0015);
+  addMesh(g, extrude(shapes, Z.fork[0], Z.fork[1], 0.03, 4), MAT.rhod(), 'fork');
+  addMesh(g, cylZ(0.2, -0.8, 2.85, 16), MAT.polish(), 'fork');
+  const stoneMat = rubyN();
+  for (const sgn of [1, -1]) {
+    const s = forkStoneCenter(sgn), box = new THREE.BoxGeometry(0.6, 0.34, 0.4); box.rotateZ(s.a);
+    addMesh(g, box, stoneMat, 'fork', { pos: [s.x, s.y, (Z.fork[0] + Z.fork[1]) / 2] });
+  }
+  JEWELS.count += 2;
+  g.rotation.z = ESC.uAng;
+  // ---- 摆轮 ----
+  n = makeNode('balance', 5.4); g = grp(n, PL.B.x, PL.B.y); rot.bal = g;
+  const arms = [0, 1, 2].map(k => { const a = (60 + k * 120) * DEG; return { x: 4.1 * Math.cos(a), y: 4.1 * Math.sin(a) }; });
+  const bf = (x, y) => {
+    let d = Math.abs(Math.hypot(x, y) - 4.2) - 0.2;
+    d = smin(d, Math.hypot(x, y) - 1.0, 0.3);
+    for (const a of arms) d = smin(d, sdCapsule(x, y, { x: 0, y: 0 }, a, 0.3, 0.22), 0.35);
+    return d;
+  };
+  addMesh(g, extrude(shapesFromSDF(bf, -4.8, -4.8, 4.8, 4.8, 0.045, 0.003), Z.balRim[0], Z.balRim[1], 0.035, 4), MAT.gold(), 'balance');
+  const sc = []; for (let k = 0; k < 16; k++) { const a = k / 16 * TAU + 0.1; sc.push({ x: 4.2 * Math.cos(a), y: 4.2 * Math.sin(a), z: Z.balRim[1], s: 0.34, rot: a }); }
+  instanced(g, _screwG, std({ color: 0xf6d78f, metalness: 1, roughness: 0.16 }, 1.3), sc, 'balance');
+  addMesh(g, cylZ(1.05, Z.balRim[0], Z.balRim[1] + 0.12, 40), MAT.steel(), 'balance');
+  addMesh(g, cylZ(0.62, Z.balRim[1] + 0.12, 4.05, 28), MAT.polish(), 'balance');
+  addMesh(g, cylZ(0.2, -0.85, 5.35, 16), MAT.polish(), 'balance');
+  addMesh(g, cylZ(1.3, Z.roller[0], Z.roller[1], 56), MAT.steel(), 'balance');
+  addMesh(g, cylZ(0.72, Z.roller[1], Z.roller[1] + 0.22, 40), MAT.polish(), 'balance');
+  addMesh(g, cylZ(0.15, Z.impulse[0], Z.impulse[1], 18), rubyN(), 'balance', { pos: [-ESC.rp, 0, 0] });
+  JEWELS.count += 1;
+  g.rotation.z = ESC.uAng;
+  // ---- 游丝 ----
+  n = makeNode('hair', 9.5); g = grp(n, PL.B.x, PL.B.y);
+  const hm = addMesh(g, hairspringGeo(), hairspringMat(), 'hair', { cast: false }); hm.position.z = Z.hair; anim.hair = hm;
+  const col = circleShape(0, 0, 1.0, 48); col.holes.push(circlePath(0, 0, 0.55, 40));
+  addMesh(g, extrude([col], Z.hair - 0.07, Z.hair + 0.15, 0.03, 3), MAT.gold(), 'hair');
+  const phE = HS.turns * TAU; PL.stud = { x: PL.B.x + HS.r1 * Math.cos(phE), y: PL.B.y + HS.r1 * Math.sin(phE) };
+  addMesh(g, cylZ(0.17, Z.hair - 0.05, Z.cock[0] - 0.02, 14), MAT.steel(), 'hair', { pos: [HS.r1 * Math.cos(phE), HS.r1 * Math.sin(phE), 0] });
+}
+
+/* ============================================================
+ *  夹板 (镀铑 + 日内瓦波纹)
+ * ============================================================ */
+function buildBridges() {
+  const C = PL.C, BAR = PL.BAR, W = PL.W, T = PL.T, F4 = PL.F4, Mw = PL.Mw, E = PL.E, F = PL.F, B = PL.B;
+  // 发条盒夹板
+  const FB1 = polar(C, 12.4, 82 * DEG), FB2 = polar(C, 13.6, 12 * DEG);
+  makeBridge({ node: 'barrelbr', dz: 7, z: Z.barrelBr, part: 'barrelbr', tex: 0.9,
+    nodes: [{ p: BAR, r: 2.5 }, { p: W, r: 1.2 }, { p: FB1, r: 1.25 }, { p: FB2, r: 1.25 }],
+    arms: [arcArm(BAR, FB1, 1.3, 1.05, 0.8), arcArm(BAR, FB2, -1.1, 1.15, 0.85), arcArm(BAR, W, 0.3, 0.95, 0.8)],
+    pillars: [FB1, FB2], jewels: [{ x: BAR.x, y: BAR.y }, { x: W.x, y: W.y, s: 0.7 }],
+    screws: [FB1, arcPoint(BAR, FB2, -1.1, 0.72)] });
+  // 轮系夹板
+  const FT1 = polar(C, 12.6, 128 * DEG), FT2 = polar(C, 12.8, 189 * DEG), FT3 = polar(C, 12.4, -28 * DEG);
+  makeBridge({ node: 'trainbr', dz: 6, z: Z.trainBr, part: 'trainbr', tex: -0.6,
+    nodes: [{ p: C, r: 2.3 }, { p: T, r: 1.6 }, { p: F4, r: 1.7 }, { p: Mw, r: 1.05 }, { p: FT1, r: 1.25 }, { p: FT2, r: 1.25 }, { p: FT3, r: 1.25 }],
+    arms: [arcArm(C, T, -0.25, 1.15, 1.05), arcArm(T, F4, 0.35, 1.05, 1.15), arcArm(T, FT1, 1.6, 1.05, 0.95), arcArm(F4, FT2, -0.9, 1.15, 1.0), arcArm(C, FT3, -1.6, 1.2, 0.95), arcArm(C, Mw, 0, 0.8, 0.8)],
+    pillars: [FT1, FT2, FT3], jewels: [{ x: C.x, y: C.y, s: 1.05 }, { x: T.x, y: T.y }, { x: F4.x, y: F4.y }],
+    screws: [FT1, FT2, FT3] });
+  // 擒纵夹板
+  const PF1 = { x: -11.4, y: -7.6 }, PF2 = { x: -4.7, y: -10.6 };
+  makeBridge({ node: 'palletbr', dz: 3.0, z: Z.palletBr, part: 'palletbr', tex: 0.35,
+    nodes: [{ p: E, r: 1.3 }, { p: F, r: 1.35 }, { p: PF1, r: 1.1 }, { p: PF2, r: 1.1 }],
+    arms: [arcArm(E, F, 0, 1.05, 1.05), arcArm(E, PF1, 0.5, 1.0, 0.9), arcArm(F, PF2, -0.5, 1.0, 0.9)],
+    pillars: [PF1, PF2], jewels: [{ x: E.x, y: E.y }, { x: F.x, y: F.y }],
+    screws: [PF2, arcPoint(E, PF1, 0.5, 0.72)] });
+  // 限位钉 (叉的两侧)
+  const bn = nodes.palletbr, pinG = [];
+  for (const s of [1, -1]) {
+    const c = Math.cos(ESC.uAng), sn = Math.sin(ESC.uAng), lx = 2.2, ly = s * 0.82;
+    pinG.push(cylZ(0.13, 0, Z.fork[1] + 0.25, 12).translate(F.x + c * lx - sn * ly, F.y + sn * lx + c * ly, 0));
+  }
+  addMesh(bn, mergeGeos(pinG), MAT.steel(), 'palletbr');
+  // 摆轮夹板 (三足)
+  const CF1 = polar(C, 12.4, -72 * DEG), CF2 = polar(C, 12.4, -130 * DEG), stud = PL.stud;
+  const cn = makeBridge({ node: 'cock', dz: 12, z: Z.cock, part: 'cock', tex: 1.2,
+    nodes: [{ p: B, r: 1.5 }, { p: CF1, r: 1.2 }, { p: CF2, r: 1.2 }, { p: stud, r: 0.95 }],
+    arms: [arcArm(B, CF1, -1.2, 0.8, 0.95), arcArm(B, CF2, 1.0, 0.8, 0.95), arcArm(B, stud, 0.2, 0.7, 0.75)],
+    pillars: [CF1, CF2], jewels: [{ x: B.x, y: B.y, s: 1.15, cap: true }],
+    screws: [CF1, CF2, stud], screwS: 1 });
+  // 快慢针 (regulator)：夹板上的圆弧拨杆 + 两枚游丝卡针
+  const rf = (x, y) => Math.min(sdArc(x, y, B, 2.35, 100 * DEG, 165 * DEG, 0.13), sdCapsule(x, y, B, polar(B, 2.35, 100 * DEG), 0.1, 0.1));
+  addMesh(cn, extrude(shapesFromSDF(rf, B.x - 3, B.y - 3, B.x + 3, B.y + 3, 0.03, 0.002), Z.cock[1], Z.cock[1] + 0.14, 0.02, 4), MAT.blue(), 'cock');
+}
+
+/* ============================================================
+ *  上链机构：发条盒轴 / 棘轮 / 棘爪 / 龙头轮 / 立轴
+ * ============================================================ */
+function buildKeyless() {
+  const n = makeNode('keyless', 9), BAR = PL.BAR, W = PL.W, P = PL.P;
+  // 发条盒轴 (细段) + 棘轮
+  const rg = grp(n, BAR.x, BAR.y); rot.ratchet = rg;
+  addMesh(rg, cylZ(0.5, 2.5, 5.36, 24), MAT.polish(), 'ratchet');
+  const sh = new THREE.Shape(sawOutline(G.ratchet.N, pitchR(G.ratchet) + 0.19, pitchR(G.ratchet) - 0.24));
+  addSpokeWindows(sh, { n: 5, r0: 0.95, r1: 2.45, swirl: -0.16, w0: 0.5, w1: 0.34, k: 0.22 });
+  addMesh(rg, extrude([sh], Z.keyless[0], Z.keyless[1], 0.03, 4), MAT.gold(), 'ratchet');
+  hubWasher(rg, 0.95, Z.keyless[1], MAT.polish(), 'ratchet');
+  screws(rg, [{ x: 0, y: 0 }], Z.keyless[1] + 0.13, 1.1);
+  rg.rotation.z = WD.ratchet0;
+  // 棘爪 + 弹片
+  const Pv = polar(BAR, 4.35, 100 * DEG), Tp = polar(BAR, 3.28, 79 * DEG), Sp = polar(BAR, 3.7, 128 * DEG);
+  const spf = arcArm(Pv, Sp, -0.5, 0.07, 0.07, 8);
+  const cf = (x, y) => smin(smin(sdCapsule(x, y, Pv, Tp, 0.3, 0.14), sdCircle(x, y, Pv, 0.62), 0.2), spf(x, y), 0.1);
+  const clickG = extrude(shapesFromSDF(cf, Pv.x - 3, Pv.y - 3, Pv.x + 3, Pv.y + 3, 0.03, 0.002), Z.keyless[0], Z.keyless[1] - 0.05, 0.025, 4);
+  addMesh(n, clickG, MAT.steel(), 'ratchet');
+  screws(n, [Pv], Z.keyless[1] - 0.05, 0.8);
+  // 龙头轮
+  const cg = grp(n, W.x, W.y); rot.crownW = cg;
+  const csh = new THREE.Shape(gearOutline(G.crownW.N, G.crownW.m));
+  addSpokeWindows(csh, { n: 4, r0: 0.5, r1: 1.2, swirl: 0.2, w0: 0.36, w1: 0.28, k: 0.1 });
+  addMesh(cg, extrude([csh], Z.keyless[0], Z.keyless[1], 0.025, 3), MAT.rose(), 'crownw');
+  addMesh(cg, cylZ(0.3, 4.4, 5.3, 16), MAT.polish(), 'crownw');
+  screws(cg, [{ x: 0, y: 0 }], Z.keyless[1] + 0.02, 0.62);
+  cg.rotation.z = WD.crown0;
+  // 立轴 + 上链小轮 (绕 x 轴)
+  const sg = grp(n, P.x, 0, Z.stem); rot.stem = sg;
+  addMesh(sg, cylX(0.5, -0.9, 21.6 - P.x, 20), MAT.polish(), 'stem');
+  const pg = pinionGeo({ N: G.windP.N, m: G.windP.m }, [-0.55, 0.55]); pg.applyMatrix4(BASIS_YZX);
+  addMesh(sg, pg, MAT.steel(), 'stem');
+  addMesh(sg, cylX(0.85, 0.7, 1.6, 24), MAT.steel(), 'stem');
+  addMesh(sg, cylX(0.66, -0.75, -0.55, 24), MAT.steel(), 'stem');
+  anim.stemCross = sg;
+}
+
+/* ============================================================
+ *  时分轮系 + 指针
+ * ============================================================ */
+function buildMotionWorks() {
+  const n = makeNode('motion', 16.5), C = PL.C, Mw = PL.Mw;
+  // 卡口管 (跟随分针)
+  let g = grp(n, C.x, C.y); rot.cannon = g;
+  addMesh(g, cylZ(0.5, 4.25, 6.9, 28), MAT.polish(), 'motion');
+  addMesh(g, pinionGeo(G.cannon, Z.mwHigh), MAT.steel(), 'motion');
+  addMesh(g, cylZ(0.72, 5.72, 5.86, 28, 0.5), MAT.steel(), 'motion');
+  // 时轮 (带时针管)
+  g = grp(n, C.x, C.y); rot.hourW = g;
+  const hs = new THREE.Shape(gearOutline(G.hourW.N, G.hourW.m));
+  addSpokeWindows(hs, { n: 5, r0: 1.05, r1: pitchR(G.hourW) - G.hourW.m * 1.2 - 0.32, swirl: -0.12, w0: 0.42, w1: 0.3, k: 0.16 });
+  addMesh(g, extrude([hs], Z.mwLow[0], Z.mwLow[1], 0.025, 3), MAT.gold(), 'motion');
+  addMesh(g, cylZ(0.95, Z.mwLow[1], 6.3, 32), MAT.gold(), 'motion');
+  // 分轮 (+ 小齿轴)
+  g = grp(n, Mw.x, Mw.y); rot.minW = g;
+  const ms = new THREE.Shape(gearOutline(G.minW.N, G.minW.m));
+  addSpokeWindows(ms, { n: 5, r0: 0.62, r1: pitchR(G.minW) - G.minW.m * 1.2 - 0.3, swirl: 0.15, w0: 0.36, w1: 0.26, k: 0.14 });
+  addMesh(g, extrude([ms], Z.mwHigh[0], Z.mwHigh[1], 0.022, 3), MAT.rhod(), 'motion');
+  addMesh(g, pinionGeo(G.minP, Z.mwLow), MAT.steel(), 'motion');
+  addMesh(g, cylZ(0.2, 4.3, 5.86, 14), MAT.polish(), 'motion');
+  screws(g, [{ x: 0, y: 0 }], Z.mwHigh[1] + 0.0, 0.6);
+  rot.cannon.rotation.z = MW.cannon0; rot.minW.rotation.z = MW.minW0; rot.hourW.rotation.z = MW.hourW0;
+}
+function buildHands() {
+  const C = PL.C, F4 = PL.F4, hubs = (g, r, z0, z1, mat, id) => addMesh(g, cylZ(r, z0, z1, 32), mat, id);
+  function sword(id, nodeName, dz, zr, half, win, hubR, capR) {
+    const n = makeNode(nodeName, dz), g = grp(n, C.x, C.y); rot[id] = g;
+    const sh = new THREE.Shape(symPts(half)); sh.holes.push(new THREE.Path(symPts(win)));
+    addMesh(g, extrude([sh], zr[0], zr[1], 0.03, 4), MAT.polish(), id);
+    addMesh(g, extrude([new THREE.Shape(symPts(win))], zr[0] + 0.05, zr[1] - 0.04, 0, 2), lumeN(), id);
+    hubs(g, hubR, zr[0], zr[1], MAT.polish(), id);
+    if (capR) addMesh(g, cylZ(capR, zr[1], zr[1] + 0.16, 24, capR * 0.7), MAT.polish(), id);
+    return g;
+  }
+  const hh = sword('hourhand', 'hourhand', 24, Z.hourHand,
+    [[0, -1.9], [0.42, -1.9], [0.44, -0.2], [0.8, 1.4], [1.05, 3.0], [0.92, 5.0], [0.5, 6.9], [0, 8.5]],
+    [[0, 1.7], [0.5, 2.0], [0.63, 3.0], [0.52, 4.9], [0.24, 6.3], [0, 6.9]], 0.9, 0);
+  const mh = sword('minhand', 'minhand', 28, Z.minHand,
+    [[0, -2.4], [0.36, -2.4], [0.4, -0.3], [0.62, 1.6], [0.72, 3.5], [0.6, 7.0], [0.42, 10.5], [0, 13.0]],
+    [[0, 2.0], [0.32, 2.4], [0.36, 4.0], [0.3, 8.0], [0.14, 11.2], [0, 12.0]], 0.62, 0.5);
+  addAnchor('hourhand', hh, 0, 5.2, Z.hourHand[1]); addAnchor('minhand', mh, 0, 8.6, Z.minHand[1]);
+  // 小秒针 (蓝钢)
+  const n = makeNode('sechand', 20), g = grp(n, F4.x, F4.y); rot.sechand = g;
+  const sf = (x, y) => {
+    let d = sdCapsule(x, y, { x: 0, y: -0.3 }, { x: 0, y: 3.0 }, 0.085, 0.02);
+    d = smin(d, Math.abs(Math.hypot(x, y + 0.85) - 0.27) - 0.075, 0.05);
+    return smin(d, sdCapsule(x, y, { x: 0, y: -0.85 }, { x: 0, y: -0.3 }, 0.06, 0.06), 0.05);
+  };
+  addMesh(g, extrude(shapesFromSDF(sf, -0.7, -1.4, 0.7, 3.3, 0.012, 0.001), Z.secHand[0], Z.secHand[1], 0.012, 3), MAT.blue(), 'sechand');
+  addMesh(g, cylZ(0.19, Z.secHand[0] + 0.02, Z.secHand[1] - 0.02, 20), MAT.lume(), 'sechand', { pos: [0, -0.85, 0] });
+  addMesh(g, cylZ(0.3, Z.secHand[0], Z.secHand[1] + 0.1, 24), MAT.blue(), 'sechand');
+  addAnchor('sechand', g, 0, 1.9, Z.secHand[1]);
+}
+
+/* ============================================================
+ *  刻度环 + 时标 + 小秒盘
+ * ============================================================ */
+function buildDial() {
+  const n = makeNode('dial', 15);
+  const tex = canvasTex(dialCanvas(JEWELS.count), { srgb: true, wrap: false, aniso: 12 });
+  tex.repeat.set(1 / (2 * RING_OUT), 1 / (2 * RING_OUT)); tex.offset.set(0.5, 0.5);
+  const rs = circleShape(0, 0, RING_OUT, 160); rs.holes.push(circlePath(0, 0, RING_IN, 160));
+  const lt = canvasTex(dialLumeCanvas(), { srgb: true, wrap: false }); lt.repeat.copy(tex.repeat); lt.offset.copy(tex.offset);
+  const ringMat = std({ color: 0xffffff, map: tex, emissive: 0x86ffc4, emissiveMap: lt, metalness: 0.25, roughness: 0.5 }, 0.9); ringMat.userData.lume = true;
+  addMesh(n, extrude([rs], Z.ring[0], Z.ring[1], 0.05, 4), ringMat, 'dial');
+  addMesh(n, anim.dialPosts, MAT.steel(), 'dial');
+  // 12 枚立体时标
+  const frames = [], lumes = [];
+  for (let h = 0; h < 12; h++) {
+    const a = h * 30 * DEG, big = h % 3 === 0, w = big ? 0.92 : 0.64, L = big ? 2.1 : 1.9, rc = 15.4;
+    const offs = h === 0 ? [-0.62, 0.62] : [0];
+    for (const o of offs) {
+      const ww = h === 0 ? 0.5 : w;
+      const fr = rrShape(ww, L, 0.13); fr.holes.push(rrShape(ww - 0.26, L - 0.26, 0.06));
+      const fg = extrude([fr], Z.index[0], Z.index[1], 0.035, 3), lg = extrude([rrShape(ww - 0.3, L - 0.3, 0.05)], Z.index[0] + 0.04, Z.index[1] - 0.07, 0, 2);
+      for (const g of [fg, lg]) { g.translate(o, 0, 0); g.rotateZ(-a); g.translate(rc * Math.sin(a), rc * Math.cos(a), 0); }
+      frames.push(fg); lumes.push(lg);
+    }
+  }
+  addMesh(n, mergeGeos(frames), MAT.polish(), 'dial');
+  addMesh(n, mergeGeos(lumes), MAT.lume(), 'dial', { cast: false });
+  // 小秒盘
+  const sn = makeNode('subdial', 13.5), F4 = PL.F4, sg = grp(sn, F4.x, F4.y);
+  const st = canvasTex(subdialCanvas(), { srgb: true, wrap: false }); st.repeat.set(1 / 6.6, 1 / 6.6); st.offset.set(0.5, 0.5);
+  const ss = circleShape(0, 0, 3.3, 96); ss.holes.push(circlePath(0, 0, 2.4, 96));
+  addMesh(sg, extrude([ss], Z.sub[0], Z.sub[1], 0.03, 4), std({ color: 0xffffff, map: st, metalness: 0.25, roughness: 0.5 }, 0.9), 'subdial');
+  const pp = []; for (let k = 0; k < 3; k++) { const a = (90 + k * 120) * DEG; pp.push(cylZ(0.2, Z.trainBr[1] - 0.05, Z.sub[0] + 0.02, 12).translate(2.85 * Math.cos(a), 2.85 * Math.sin(a), 0)); }
+  addMesh(sg, mergeGeos(pp), MAT.steel(), 'subdial');
+}
+
+/* ============================================================
+ *  表壳 / 表圈 / 水晶 / 表冠 / 后盖
+ * ============================================================ */
+function latheZ(pts, seg = 160) { const g = new THREE.LatheGeometry(pts.map(p => V2(p[0], p[1])), seg); g.rotateX(Math.PI / 2); return g; }
+function buildCase() {
+  const n = makeNode('case', -9);
+  const bt = canvasTex(brushedCanvas()); bt.repeat.set(1, 5);
+  const brushed = std({ color: 0xd6dae1, metalness: 1, roughness: 0.34, normalMap: bt, normalScale: V2(0.7, 0.7), side: THREE.DoubleSide }, 1.1);
+  const polished = std({ color: 0xeceff3, metalness: 1, roughness: 0.09, side: THREE.DoubleSide }, 1.2);
+  const inner = std({ color: 0x15171b, metalness: 0.6, roughness: 0.5, side: THREE.DoubleSide }, 0.7);
+  addMesh(n, latheZ([[21.0, -2.2], [21.06, -0.6], [21.07, 2.4], [21.06, 5.2], [21.0, 6.5]]), brushed, 'case');
+  addMesh(n, latheZ([[17.5, -2.9], [20.0, -3.0], [20.85, -2.6], [21.0, -2.2]]), polished, 'case');
+  addMesh(n, latheZ([[21.0, 6.5], [20.85, 6.95], [20.3, 7.4], [17.5, 7.4]]), polished, 'case');
+  addMesh(n, latheZ([[17.5, 7.4], [17.5, 2.0], [17.5, -2.9]]), inner, 'case', { cast: false });
+  // 机芯圈 (深色)
+  const mr = circleShape(0, 0, 17.5, 128); mr.holes.push(circlePath(0, 0, PLATE_R, 128));
+  addMesh(n, extrude([mr], -1.0, 0.6, 0.04, 4), inner, 'case');
+  // 表耳
+  const ls = new THREE.Shape(); ls.moveTo(15, -2.8); ls.lineTo(15, 6.5); ls.quadraticCurveTo(24.0, 7.3, 27.0, 2.3); ls.quadraticCurveTo(27.9, 0.7, 26.7, -0.3);
+  ls.quadraticCurveTo(23.6, -1.3, 20.4, -2.7); ls.lineTo(15, -2.9); ls.lineTo(15, -2.8);
+  const lugGeo = extrude([ls], -1.9, 1.9, 0.28, 8); lugGeo.applyMatrix4(BASIS_YZX);
+  for (const [sx, top] of [[1, true], [-1, true], [1, false], [-1, false]]) {
+    const m = addMesh(n, lugGeo, polished, 'case'); m.position.x = sx * 12.1; if (!top) m.rotation.z = Math.PI;
+  }
+  for (const sy of [1, -1]) addMesh(n, cylX(0.5, -10.4, 10.4, 16), MAT.steel(), 'case', { pos: [0, sy * 24.7, 0.3] });
+  // 表冠管
+  addMesh(n, cylX(2.1, 20.7, 22.3, 32), polished, 'case', { pos: [0, 0, Z.stem] });
+  // 表圈 (72 道凹槽)
+  const bn = makeNode('bezel', 33), pts = [], cnt = 72, sg = cnt * 10;
+  for (let i = 0; i < sg; i++) { const a = i / sg * TAU, r = 20.86 + 0.14 * Math.cos(a * cnt); pts.push(V2(r * Math.cos(a), r * Math.sin(a))); }
+  const bs = new THREE.Shape(pts); bs.holes.push(circlePath(0, 0, 17.3, 200));
+  addMesh(bn, extrude([bs], Z.bezel[0], Z.bezel[1], 0.17, 1), polished, 'bezel');
+  // 蓝宝石水晶
+  const cn = makeNode('crystal', 40);
+  const glass = phys({ color: 0x000000, metalness: 0, roughness: 0.04, ior: 1.77, specularIntensity: 0.42, specularColor: new THREE.Color(0.8, 0.92, 1.0),
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }, 1.25);
+  glass.userData.glass = true;
+  addMesh(cn, latheZ([[0, 8.92], [6, 8.9], [11, 8.8], [15, 8.6], [17.2, 8.42], [17.75, 8.3], [17.9, 8.1], [17.9, Z.crystalBottom], [0, Z.crystalBottom]], 200), glass, 'crystal', { cast: false, receive: false });
+  // 后盖：钢圈 + 蓝宝石背玻璃
+  const kn = makeNode('caseback', -16);
+  const kr = circleShape(0, 0, 20.7, 160); kr.holes.push(circlePath(0, 0, 16.5, 160));
+  addMesh(kn, extrude([kr], -3.6, -2.4, 0.1, 4), brushed, 'caseback');
+  const hex = []; for (let k = 0; k < 6; k++) { const a = k * 60 * DEG + 30 * DEG; hex.push({ x: 18.6 * Math.cos(a), y: 18.6 * Math.sin(a), z: -3.6, rot: a }); }
+  const hexG = new THREE.CylinderGeometry(0.66, 0.66, 0.3, 6); hexG.rotateX(Math.PI / 2); hexG.translate(0, 0, -0.15);
+  instanced(kn, hexG, std({ color: 0xc4c9d1, metalness: 1, roughness: 0.22 }, 1.1), hex, 'caseback');
+  const gn = makeNode('backglass', -13);
+  const bg = phys({ color: 0x000000, metalness: 0, roughness: 0.04, ior: 1.77, specularIntensity: 0.42, specularColor: new THREE.Color(0.8, 0.92, 1.0), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }, 1.25);
+  bg.userData.glass = true;
+  addMesh(gn, latheZ([[0, -2.4], [16.4, -2.4], [16.62, -2.62], [16.62, -3.2], [16.4, -3.3], [0, -3.3]], 160), bg, 'caseback', { cast: false, receive: false });
+  // 表冠
+  const rn = makeNode('crown', -9, 9), rg = grp(rn, 0, 0, Z.stem); rot.crown = rg;
+  const kp = [], kc = 24, ks = kc * 12;
+  for (let i = 0; i < ks; i++) { const a = i / ks * TAU, r = 3.02 + 0.22 * (0.5 + 0.5 * Math.tanh(3.2 * Math.sin(kc * a))); kp.push(V2(r * Math.cos(a), r * Math.sin(a))); }
+  const kg = extrude([new THREE.Shape(kp)], 21.3, 25.3, 0.22, 2); kg.applyMatrix4(BASIS_YZX);
+  addMesh(rg, kg, polished, 'crown');
+  addMesh(rg, cylX(2.25, 20.5, 21.5, 32), polished, 'crown');
+  addMesh(rg, cylX(1.55, 25.28, 25.4, 32), MAT.gold(), 'crown');
+  addMesh(rg, cylX(0.5, 20.0, 21.4, 16), MAT.polish(), 'crown');
+}
+
+/* ============================================================
+ *  APP · 渲染器 / 影棚环境 / 灯光 / 交互 / UI / 主循环
+ * ============================================================ */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+let renderer, scene, camera, controls, composer, bloom, finalPass, keyLight, fillLight, rimLight, backdropMat, floorMirror, dust, leaderLines;
+const FLOOR_Y = -28.7;
+const S = {
+  explode: 1, explodeTarget: 1, night: 0, nightTarget: 0, speed: 1, labels: false, autoRotate: false, panel: true,
+  wind: 0.72, windRot: 0, windAnim: null, setAnim: null, setOffset: 0,
+  hover: null, selected: null, dim: 0, quality: 2, lastSpringW: -1, ready: false,
+};
+const TM = { sim: 0, alpha0: 0, hour0: 0, sec0: 0, B0: 0 };
+let viewShift = 0;
+let matPart = new Map();
+
+/* ---------- 渲染器 / 场景 ---------- */
+function initRenderer() {
+  renderer = new THREE.WebGLRenderer({ canvas: $('#gl'), antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
+  scene = new THREE.Scene(); scene.background = new THREE.Color(0x020305);
+  camera = new THREE.PerspectiveCamera(26, innerWidth / innerHeight, 3, 1600);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.07; controls.rotateSpeed = 0.7; controls.zoomSpeed = 0.9;
+  controls.minDistance = 22; controls.maxDistance = 320; controls.minPolarAngle = 0.12; controls.maxPolarAngle = 1.78;
+  controls.screenSpacePanning = true; controls.autoRotateSpeed = 1.1;
+  setCamera(VIEWS.intro);
+}
+
+/* ---------- 影棚环境贴图 (自建软箱布光，供金属反射) ---------- */
+function gradTex(kind) {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  let gr;
+  if (kind === 'radial') { gr = g.createRadialGradient(128, 128, 8, 128, 128, 128); gr.addColorStop(0, '#fff'); gr.addColorStop(0.55, '#a9a9a9'); gr.addColorStop(1, '#151515'); }
+  else { gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, '#d0d0d0'); gr.addColorStop(1, '#4a4a4a'); }
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function buildEnvTexture() {
+  const es = new THREE.Scene();
+  es.add(new THREE.Mesh(new THREE.BoxGeometry(90, 64, 90), new THREE.MeshBasicMaterial({ color: 0x08090c, side: THREE.BackSide })));
+  const panel = (w, h, I, col, pos, grad) => {
+    const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(col).multiplyScalar(I), side: THREE.DoubleSide });
+    if (grad) mat.map = gradTex(grad);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.position.set(...pos); m.lookAt(0, 0, 0); es.add(m);
+  };
+  panel(34, 24, 5.2, 0xfff0dc, [0, 30, 8], 'radial');       // 顶部大软箱 (暖白)
+  panel(4.5, 38, 11, 0xf0f5ff, [-36, 4, 12], 'v');           // 左侧长条 (冷白，形成金属勾边高光)
+  panel(4.5, 34, 7.5, 0xffe2b8, [38, 2, 6], 'v');            // 右侧长条 (暖)
+  panel(46, 26, 1.5, 0xfff8ee, [0, 6, 40], 'radial');        // 正面柔光 (镜面正对相机时的灰阶)
+  panel(30, 4.5, 3.6, 0xdce8ff, [0, -6, 36], null);          // 前下补光条
+  panel(34, 14, 2.6, 0xbdd0ff, [0, 8, -38], 'v');            // 背光
+  panel(3.2, 3.2, 70, 0xffffff, [-20, 22, 26], null);        // 小面积强光 → 倒角上的星芒
+  panel(2.2, 6.0, 40, 0xfff4e2, [24, 16, 24], null);
+  panel(2.2, 2.2, 45, 0xcfe0ff, [10, 30, -20], null);
+  const pm = new THREE.PMREMGenerator(renderer);
+  const rt = pm.fromScene(es, 0.015); pm.dispose();
+  return rt.texture;
+}
+
+/* ---------- 灯光 / 背景 / 镜面地板 / 尘埃 ---------- */
+function initLights() {
+  keyLight = new THREE.DirectionalLight(0xfff1de, 2.7); keyLight.position.set(-30, 40, 60);
+  keyLight.castShadow = true; keyLight.shadow.mapSize.set(4096, 4096);
+  const sc = keyLight.shadow.camera; sc.left = sc.bottom = -26; sc.right = sc.top = 26; sc.near = 40; sc.far = 125;
+  keyLight.shadow.bias = -0.0003; keyLight.shadow.normalBias = 0.012;
+  fillLight = new THREE.DirectionalLight(0x9fb7ff, 0.55); fillLight.position.set(42, 10, 50);
+  rimLight = new THREE.DirectionalLight(0xffe4c4, 1.5); rimLight.position.set(18, 32, -52);
+  scene.add(keyLight, keyLight.target, fillLight, rimLight);
+}
+function initBackdrop() {
+  backdropMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: { uGlowDir: { value: new THREE.Vector3(0.1, 0.12, -1) }, uDim: { value: 1 } },
+    vertexShader: 'varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `varying vec3 vDir; uniform vec3 uGlowDir; uniform float uDim;
+      void main(){
+        vec3 d = normalize(vDir);
+        vec3 base = mix(vec3(0.0035, 0.004, 0.006), vec3(0.016, 0.019, 0.026), smoothstep(-0.55, 0.4, d.y));
+        vec3 g = normalize(uGlowDir);
+        float a = pow(max(dot(d, g), 0.0), 5.0), b = pow(max(dot(d, normalize(g + vec3(0.0, 0.35, 0.0))), 0.0), 18.0);
+        vec3 col = base + vec3(0.036, 0.046, 0.066) * a + vec3(0.05, 0.043, 0.032) * b * 0.55;
+        gl_FragColor = vec4(col * uDim, 1.0);
+      }`,
+  });
+  const bd = new THREE.Mesh(new THREE.SphereGeometry(700, 40, 24), backdropMat); bd.frustumCulled = false; bd.renderOrder = -10; scene.add(bd);
+}
+const mirrorShader = {
+  name: 'BlurMirror',
+  uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, uTexel: { value: new THREE.Vector2(1 / 512, 1 / 512) } },
+  vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec2 vLocal; varying vec3 vWorld;
+    void main(){ vUv = textureMatrix * vec4(position, 1.0); vLocal = position.xy; vWorld = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: `uniform vec3 color; uniform sampler2D tDiffuse; uniform vec2 uTexel; varying vec4 vUv; varying vec2 vLocal; varying vec3 vWorld;
+    void main(){
+      vec2 uv = vUv.xy / vUv.w;
+      float r = length(vLocal);
+      float blur = 5.0 + r * 0.09;
+      vec3 acc = vec3(0.0);
+      for (int i = 0; i < 14; i++) {
+        float fi = float(i);
+        float a = fi * 2.399963;
+        vec2 o = vec2(cos(a), sin(a)) * sqrt((fi + 0.5) / 14.0) * uTexel * blur;
+        acc += texture2D(tDiffuse, uv + o).rgb;
+      }
+      vec3 refl = acc / 14.0;
+      // 抛光黑玻璃：菲涅尔加权 (掠射角反射强，正视角反射弱)
+      float cosT = clamp(normalize(cameraPosition - vWorld).y, 0.0, 1.0);
+      float fres = 0.05 + 0.95 * pow(1.0 - cosT, 4.0);
+      float alpha = 1.0 - smoothstep(14.0, 78.0, r);
+      gl_FragColor = vec4(refl * color * fres * 2.6, alpha);
+    }`,
+};
+function initFloor() {
+  const w = Math.max(256, Math.floor(innerWidth * 0.5)), h = Math.max(256, Math.floor(innerHeight * 0.5));
+  floorMirror = new Reflector(new THREE.CircleGeometry(90, 72), { clipBias: 0.003, textureWidth: w, textureHeight: h, color: 0xffffff, shader: mirrorShader, multisample: 0 });
+  floorMirror.rotation.x = -Math.PI / 2; floorMirror.position.y = FLOOR_Y;
+  floorMirror.material.transparent = true; floorMirror.material.depthWrite = false;
+  floorMirror.material.uniforms.uTexel.value.set(1 / w, 1 / h);
+  scene.add(floorMirror);
+}
+function initDust() {
+  const n = 220, pos = new Float32Array(n * 3), rnd = mulberry32(99);
+  for (let i = 0; i < n; i++) { const r = 42 + rnd() * 60, a = rnd() * TAU, y = -26 + rnd() * 78; pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = y; pos[i * 3 + 2] = Math.sin(a) * r; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+  const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+  dust = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.9, map: new THREE.CanvasTexture(c), transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xcfd9ff }));
+  scene.add(dust);
+}
+function initPost() {
+  const pr = renderer.getPixelRatio();
+  const rt = new THREE.WebGLRenderTarget(innerWidth * pr, innerHeight * pr, { type: THREE.HalfFloatType, samples: 4 });
+  composer = new EffectComposer(renderer, rt); composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight);
+  composer.addPass(new RenderPass(scene, camera));
+  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.3, 0.55, 0.92); composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  finalPass = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uVig: { value: 0.62 }, uGrain: { value: 0.028 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime, uVig, uGrain; varying vec2 vUv;
+      float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+      void main(){
+        vec4 c = texture2D(tDiffuse, vUv); vec2 q = vUv - 0.5;
+        c.rgb *= clamp(1.0 - uVig * dot(q, q) * 1.7, 0.0, 1.0);
+        float n = hash(vUv * vec2(1731.0, 977.0) + fract(uTime) * 91.7) - 0.5;
+        c.rgb += n * uGrain * (0.35 + 0.65 * (1.0 - clamp(c.r * 1.6, 0.0, 1.0)));
+        gl_FragColor = c;
+      }`,
+  });
+  composer.addPass(finalPass);
+}
+
+/* ---------- 视角 ---------- */
+const VIEWS = {
+  intro: { az: -40, pol: 66, dist: 210, t: [0, 0, 6] },
+  home: { az: 24, pol: 76, dist: 118, t: [0, 0, 1] },
+  front: { az: 0, pol: 90, dist: 104, t: [0, 0, 1] },
+  three: { az: 38, pol: 72, dist: 108, t: [0, 0, 1] },
+  back: { az: 158, pol: 82, dist: 110, t: [0, 0, 0] },
+  explode: { az: 50, pol: 78, dist: 150, t: [0, 0, 14] },
+  esc: { az: 10, pol: 62, dist: 44, t: [PL.E.x * 0.5 + PL.B.x * 0.5, PL.E.y * 0.5 + PL.B.y * 0.5, 2.6] },
+  balance: { az: -6, pol: 58, dist: 36, t: [PL.B.x, PL.B.y, 4] },
+  barrel: { az: 14, pol: 54, dist: 48, t: [PL.BAR.x, PL.BAR.y, 2.5] },
+};
+function setCamera(v) {
+  const sp = new THREE.Spherical(v.dist, v.pol * DEG, v.az * DEG);
+  controls.target.set(...v.t); camera.position.setFromSpherical(sp).add(controls.target); camera.lookAt(controls.target);
+}
+let camTween = null;
+function flyTo(v, dur = 1.8) {
+  const off = camera.position.clone().sub(controls.target), s0 = new THREE.Spherical().setFromVector3(off);
+  camTween = { t: 0, dur, r0: s0.radius, p0: s0.phi, a0: s0.theta, r1: v.dist, p1: v.pol * DEG, a1: wrapPi(v.az * DEG - s0.theta) + s0.theta, tg0: controls.target.clone(), tg1: V3(...v.t) };
+}
+function stepCamera(dt) {
+  if (!camTween) return;
+  const c = camTween; c.t += dt; const k = smoother(c.t / c.dur);
+  const sp = new THREE.Spherical(lerp(c.r0, c.r1, k), lerp(c.p0, c.p1, k), lerp(c.a0, c.a1, k));
+  controls.target.lerpVectors(c.tg0, c.tg1, k);
+  camera.position.setFromSpherical(sp).add(controls.target);
+  if (c.t >= c.dur) camTween = null;
+}
+
+/* ---------- 零件辅助：锚点 / 高亮 / 材质更新 ---------- */
+function setupAnchors() {
+  const { C, BAR, W, P, T, F4, E, F, B } = PL, A = (id, node, p, z) => addAnchor(id, nodes[node], p.x, p.y, z), pp = (p, r, d) => polar(p, r, d * DEG);
+  A('crystal', 'crystal', { x: -12.5, y: 12.5 }, 8.6); A('bezel', 'bezel', { x: -13.6, y: -13.6 }, 8.6);
+  A('case', 'case', { x: -20.6, y: 3.6 }, 1.2); A('crown', 'crown', { x: 25.0, y: 0 }, Z.stem); A('caseback', 'caseback', { x: -13.1, y: -13.3 }, -3.9);
+  A('dial', 'dial', { x: 11.3, y: -11.3 }, Z.index[1]); A('subdial', 'subdial', { x: F4.x - 3.0, y: F4.y }, Z.sub[1]);
+  A('barrel', 'barrel', pp(BAR, 6.0, -55), Z.barrel[1]); A('spring', 'spring', pp(BAR, 3.6, -120), Z.spring[1]);
+  A('ratchet', 'keyless', pp(BAR, 3.2, 190), Z.keyless[1]); A('crownw', 'keyless', pp(W, 1.5, 70), Z.keyless[1]); A('stem', 'keyless', { x: P.x + 2.9, y: 0 }, Z.stem);
+  A('cwheel', 'cwheel', pp(C, 3.75, -105), Z.cWheel[1]); A('twheel', 'twheel', pp(T, 2.9, 150), Z.tWheel[1]); A('f4wheel', 'f4wheel', pp(F4, 3.5, 200), Z.f4Wheel[1]);
+  A('esc', 'esc', pp(E, 1.9, 200), Z.esc[1]); A('fork', 'fork', pp(F, 1.8, ESC.uAng / DEG), Z.fork[1]);
+  A('balance', 'balance', pp(B, 4.2, 235), Z.balRim[1]); A('hair', 'hair', pp(B, 2.55, 205), Z.hair);
+  A('cock', 'cock', arcPoint(B, polar(C, 12.4, -72 * DEG), -1.2, 0.5), Z.cock[1]);
+  A('barrelbr', 'barrelbr', arcPoint(BAR, polar(C, 12.4, 82 * DEG), 1.3, 0.5), Z.barrelBr[1]);
+  A('trainbr', 'trainbr', arcPoint(C, polar(C, 12.4, -28 * DEG), -1.6, 0.55), Z.trainBr[1]);
+  A('palletbr', 'palletbr', mid(E, F), Z.palletBr[1]); A('plate', 'plate', { x: 11.8, y: -2.6 }, 0);
+  A('motion', 'motion', pp(C, 2.2, -80), Z.mwLow[1]); A('jewels', 'palletbr', E, 2.85); A('screws', 'barrelbr', polar(C, 12.4, 82 * DEG), Z.barrelBr[1]);
+}
+const HL_COL = [0.05, 0.42, 0.95];
+function updateMaterials(dt) {
+  const nightK = S.night, envScale = lerp(1, 0.05, nightK);
+  const anyHl = S.hover || S.selected;
+  S.dim += ((anyHl ? 1 : 0) - S.dim) * (1 - Math.exp(-dt * 6));
+  for (const id in parts) {
+    const p = parts[id], tgt = (S.hover === id || S.selected === id) ? 1 : 0;
+    p.hl += (tgt - p.hl) * (1 - Math.exp(-dt * 10));
+  }
+  for (const m of allMats) {
+    const p = matPart.get(m), hl = p ? p.hl : 0, ud = m.userData;
+    m.envMapIntensity = ud.env * envScale * (1 - 0.55 * S.dim * (1 - hl));
+    if (m.emissive) {
+      let ei = ud.ei; const em = ud.em;
+      if (ud.lume) ei = lerp(0.2, 2.8, nightK);
+      const k = hl * (ud.glass ? 0.06 : 0.34);
+      m.emissive.setRGB(em.r * ei + HL_COL[0] * k, em.g * ei + HL_COL[1] * k, em.b * ei + HL_COL[2] * k); m.emissiveIntensity = 1;
+    }
+  }
+  const li = lerp(1, 0.035, nightK);
+  keyLight.intensity = 2.7 * li; fillLight.intensity = 0.55 * li; rimLight.intensity = 1.5 * li;
+  backdropMat.uniforms.uDim.value = lerp(1, 0.22, nightK);
+  floorMirror.material.uniforms.color.value.setScalar(lerp(1.0, 0.25, nightK));
+  bloom.strength = lerp(0.28, 0.85, nightK); bloom.threshold = lerp(0.92, 0.72, nightK);
+}
+
+/* ============================================================
+ *  每帧更新：运动学 / 爆炸 / 上链 / 拨针
+ * ============================================================ */
+function computeDelays() {
+  const list = Object.values(nodes); let mx = -1e9, mn = 1e9;
+  for (const n of list) { mx = Math.max(mx, n.userData.dz); mn = Math.min(mn, n.userData.dz); }
+  for (const n of list) n.userData.delay = 0.42 * (mx - n.userData.dz) / (mx - mn);
+}
+function applyExplode() {
+  const e = S.explode;
+  for (const n of Object.values(nodes)) {
+    const t = smoother(clamp(e * 1.42 - n.userData.delay, 0, 1));
+    n.position.z = n.userData.dz * t; n.position.x = n.userData.dx * t;
+  }
+  leaderLines.material.opacity = 0.5 * smoothstep(0.25, 0.9, e);
+  leaderLines.visible = e > 0.02;
+  const sc = keyLight.shadow.camera, r = 26 + 24 * e; if (Math.abs(sc.right - r) > 0.5) { sc.left = sc.bottom = -r; sc.right = sc.top = r; sc.updateProjectionMatrix(); }
+}
+function updateKinematics(dt) {
+  TM.sim += dt * S.speed;
+  const es = escapement(TM.sim), B = es.beat, dB = B - TM.B0;
+  rot.e.rotation.z = TRAIN.esc.th0 + TRAIN.esc.k * B;
+  rot.f4.rotation.z = TRAIN.f4.th0 + TRAIN.f4.k * B;
+  rot.t.rotation.z = TRAIN.t.th0 + TRAIN.t.k * B;
+  rot.c.rotation.z = TRAIN.c.th0 + TRAIN.c.k * B;
+  rot.bar.rotation.z = TRAIN.bar.th0 + TRAIN.bar.k * B; rot.spring.rotation.z = rot.bar.rotation.z;
+  rot.fork.rotation.z = ESC.uAng + es.psi;
+  rot.bal.rotation.z = ESC.uAng + es.theta;
+  hsU.uTheta.value = es.theta;
+  // 拨针动画 (立轴拉出：指针脱离轮系自由转动)
+  if (S.setAnim) { const a = S.setAnim; a.t += dt; const k = smoother(a.t / a.dur); S.setOffset = lerp(a.from, a.to, k); if (a.t >= a.dur) S.setAnim = null; }
+  const dAlpha = -TRAIN.c.k * dB + S.setOffset;                 // 分针 CW 转角增量
+  rot.minhand.rotation.z = -(TM.alpha0 + dAlpha);
+  rot.hourhand.rotation.z = -(TM.hour0 + dAlpha / 12);
+  rot.sechand.rotation.z = -(TM.sec0 - TRAIN.f4.k * dB);
+  rot.cannon.rotation.z = MW.cannon0 - dAlpha;
+  rot.minW.rotation.z = MW.minW0 + dAlpha * G.cannon.N / G.minW.N;
+  rot.hourW.rotation.z = MW.hourW0 - dAlpha / 12;
+  // 上链
+  if (S.windAnim) {
+    const a = S.windAnim; a.t += dt; const w = lerp(a.from, a.to, smoother(a.t / a.dur));
+    S.windRot += (w - S.wind) * 7 * TAU; S.wind = w; if (a.t >= a.dur) S.windAnim = null;
+    document.body.classList.toggle('winding', !!S.windAnim);
+  } else { S.wind = Math.max(0.0, S.wind - dt * S.speed / (56 * 3600)); }
+  rot.ratchet.rotation.z = WD.ratchet0 + S.windRot;
+  rot.crownW.rotation.z = WD.crown0 - S.windRot * G.ratchet.N / G.crownW.N;
+  rot.stem.rotation.x = S.windRot * (G.ratchet.N / G.crownW.N) * (G.crownW.N / G.windP.N); rot.crown.rotation.x = rot.stem.rotation.x;
+  if (Math.abs(S.wind - S.lastSpringW) > 0.004) { anim.spring.geometry.dispose(); anim.spring.geometry = springGeo(S.wind); S.lastSpringW = S.wind; }
+  return { es, dAlpha };
+}
+
+/* ============================================================
+ *  HUD / 面板 / 标签 / 交互
+ * ============================================================ */
+const fmt2 = n => String(Math.floor(n)).padStart(2, '0');
+let hudAcc = 0;
+function updateHud(dt, k) {
+  hudAcc += dt; if (hudAcc < 0.1) return; hudAcc = 0;
+  const mins = ((TM.alpha0 + k.dAlpha) / TAU * 60) % 60, hrs = ((TM.hour0 + k.dAlpha / 12) / TAU * 12) % 12, sec = (((TM.sec0 + (-TRAIN.f4.k * (k.es.beat - TM.B0))) / TAU) * 60) % 60;
+  const h = Math.floor(hrs) || 12;
+  $('#h-time').textContent = `${fmt2(h)}:${fmt2(mins)}:${fmt2(sec)}`;
+  $('#h-amp').textContent = Math.round(Math.abs(k.es.theta) / DEG).toString().padStart(3, '0') + '°';
+  $('#h-beat').textContent = (6 * S.speed).toFixed(S.speed < 1 ? 1 : 0) + ' 拍/秒';
+  const pct = Math.round(S.wind * 100);
+  $('#h-bar').style.width = pct + '%'; $('#h-res').textContent = `${pct}%  ≈ ${(S.wind * 56).toFixed(0)} 小时`;
+  $('#s-res').textContent = `${(S.wind * 56).toFixed(1)} / 56 h`;
+  $('#s-time').textContent = `${fmt2(h)}:${fmt2(mins)}:${fmt2(sec)}`;
+}
+function showCard(id) {
+  const c = $('#card');
+  if (!id) { c.classList.add('empty'); c.innerHTML = '<div class="hintline">悬停或点击任意零件，查看它的名称、作用与参数。<br><span>也可以从下方“零件目录”中选择。</span></div>'; return; }
+  const p = parts[id], cat = CAT[p.cat];
+  c.classList.remove('empty');
+  c.innerHTML = `<div class="cat" style="--c:${cat.color}"><i></i>${cat.zh}</div><h3>${p.zh}</h3><div class="en">${p.en}</div><p>${p.desc}</p>
+    <table>${p.specs.map(s => `<tr><td>${s[0]}</td><td>${s[1]}</td></tr>`).join('')}</table>`;
+}
+function setHover(id) {
+  if (S.hover === id) return; S.hover = id;
+  if (!S.selected) showCard(id);
+  $$('.chip').forEach(el => el.classList.toggle('on', el.dataset.id === (id || S.selected)));
+  $$('.lab').forEach(el => el.classList.toggle('hot', el.dataset.id === id || el.dataset.id === S.selected));
+  $('#gl').style.cursor = id ? 'pointer' : 'grab';
+}
+function select(id, fly = true) {
+  S.selected = id; showCard(id || S.hover);
+  $$('.chip').forEach(el => el.classList.toggle('on', el.dataset.id === (id || S.hover)));
+  $$('.lab').forEach(el => el.classList.toggle('hot', el.dataset.id === id || el.dataset.id === S.hover));
+  if (id && fly) focusPart(id);
+  if (id && !S.panel) togglePanel(true);
+}
+function focusPart(id) {
+  const p = parts[id], box = new THREE.Box3(), tmp = new THREE.Box3();
+  const im4 = new THREE.Matrix4(), ip = new THREE.Vector3();
+  for (const m of p.meshes) {
+    m.updateWorldMatrix(true, false);
+    if (m.isInstancedMesh) { for (let i = 0; i < m.count; i++) { m.getMatrixAt(i, im4); ip.setFromMatrixPosition(im4).applyMatrix4(m.matrixWorld); box.expandByPoint(ip); } }
+    else { tmp.setFromObject(m); if (isFinite(tmp.min.x)) box.union(tmp); }
+  }
+  if (box.isEmpty()) return;
+  const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()).length();
+  const off = camera.position.clone().sub(controls.target), sp = new THREE.Spherical().setFromVector3(off);
+  const dist = clamp(size * 2.1 + 16, 32, 150);
+  flyTo({ az: sp.theta / DEG, pol: sp.phi / DEG, dist, t: [c.x, c.y, c.z] }, 1.4);
+}
+function togglePanel(open) { S.panel = open === undefined ? !S.panel : open; $('#panel').classList.toggle('open', S.panel); $('#ptoggle').setAttribute('aria-expanded', S.panel); }
+
+/* --- 标签系统：两侧对齐的技术图引出线 --- */
+const _wp = new THREE.Vector3();
+function anchorWorld(p) { const o = p.anchorObj || p.meshes[0]; o.getWorldPosition(_wp); return _wp; }
+function toScreen(v) { const q = v.clone().project(camera); return { x: (q.x * 0.5 + 0.5) * innerWidth, y: (-q.y * 0.5 + 0.5) * innerHeight, z: q.z }; }
+let labelEls = {}, lineEls = {};
+function buildLabels() {
+  const host = $('#labels'), svg = $('#lines');
+  let i = 1;
+  for (const id in parts) {
+    const p = parts[id], el = document.createElement('div'); el.className = 'lab'; el.dataset.id = id;
+    el.innerHTML = `<span class="n">${String(i++).padStart(2, '0')}</span><span class="t">${p.zh}</span>`;
+    el.style.setProperty('--c', CAT[p.cat].color);
+    el.addEventListener('pointerenter', () => setHover(id)); el.addEventListener('pointerleave', () => setHover(null));
+    el.addEventListener('click', e => { e.stopPropagation(); select(S.selected === id ? null : id); });
+    host.appendChild(el); labelEls[id] = el;
+    const ln = document.createElementNS('http://www.w3.org/2000/svg', 'path'); ln.setAttribute('class', 'ln'); ln.style.setProperty('--c', CAT[p.cat].color); svg.appendChild(ln); lineEls[id] = ln;
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); dot.setAttribute('r', 2.6); dot.setAttribute('class', 'dt'); dot.style.setProperty('--c', CAT[p.cat].color); svg.appendChild(dot); ln._dot = dot;
+  }
+}
+function updateLabels() {
+  const on = S.labels, W = innerWidth, H = innerHeight;
+  document.body.classList.toggle('labels-on', on);
+  $('#labels').style.display = on ? 'block' : 'none';
+  if (!on) { for (const id in lineEls) { lineEls[id].setAttribute('d', ''); lineEls[id]._dot.setAttribute('r', 0); } return; }
+  const ctr = toScreen(controls.target), edge = toScreen(controls.target.clone().add(V3(21, 0, 0).applyQuaternion(camera.quaternion)));
+  const R = clamp(Math.hypot(edge.x - ctr.x, edge.y - ctr.y), 120, Math.min(W, H) * 0.7);
+  const LW = 168, rightLimit = W - (S.panel && W > 900 ? 372 : 12) - LW;
+  const colL = clamp(ctr.x - R - 46, LW + 12, W), colR = clamp(ctr.x + R + 46, 0, rightLimit);
+  const L = [], Rr = [];
+  for (const id in parts) { const s = toScreen(anchorWorld(parts[id])); s.id = id; (s.x < ctr.x ? L : Rr).push(s); }
+  const place = (arr, col, left) => {
+    arr.sort((a, b) => a.y - b.y);
+    const hudOn = W > 900 && H > 640, gap = clamp((H - 250) / Math.max(arr.length, 1), 21, 34), top = 84, bot = H - (hudOn ? 178 : 118);
+    let y = arr.map(a => clamp(a.y, top, bot));
+    for (let i = 1; i < y.length; i++) y[i] = Math.max(y[i], y[i - 1] + gap);
+    const over = y.length ? y[y.length - 1] - bot : 0; if (over > 0) { y[y.length - 1] = bot; for (let i = y.length - 2; i >= 0; i--) y[i] = Math.min(y[i], y[i + 1] - gap); }
+    arr.forEach((a, i) => {
+      const el = labelEls[a.id], ln = lineEls[a.id], vis = a.z < 1;
+      el.style.opacity = vis ? 1 : 0; el.classList.toggle('left', left);
+      el.style.transform = `translate(${left ? col - LW : col}px, ${y[i] - 11}px)`;
+      const ex = left ? col + 6 : col - 6, mx = left ? col + 26 : col - 26;
+      ln.setAttribute('d', vis ? `M${a.x},${a.y} L${mx},${y[i]} L${ex},${y[i]}` : ''); ln._dot.setAttribute('cx', a.x); ln._dot.setAttribute('cy', a.y); ln._dot.setAttribute('r', vis ? 2.6 : 0);
+      ln.classList.toggle('hot', a.id === S.hover || a.id === S.selected); ln._dot.classList.toggle('hot', a.id === S.hover || a.id === S.selected);
+    });
+  };
+  place(L, colL, true); place(Rr, colR, false);
+}
+/* --- 拾取 --- */
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(), ptr = { x: 0, y: 0, moved: false, down: null, inside: false };
+function pick() {
+  ray.setFromCamera(mouse, camera);
+  const hits = ray.intersectObjects(pickables, false); let glass = null;
+  for (const h of hits) { const id = h.object.userData.partId; if (id === 'crystal') { glass = glass || id; continue; } return id; }
+  return glass;
+}
+function bindEvents() {
+  const cv = $('#gl');
+  cv.addEventListener('pointermove', e => { ptr.x = e.clientX; ptr.y = e.clientY; mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight * 2 - 1)); ptr.moved = true; ptr.inside = true; });
+  cv.addEventListener('pointerleave', () => { ptr.inside = false; setHover(null); $('#tip').classList.remove('on'); });
+  cv.addEventListener('pointerdown', e => { ptr.down = { x: e.clientX, y: e.clientY }; camTween = null; cv.style.cursor = 'grabbing'; });
+  cv.addEventListener('pointerup', e => {
+    cv.style.cursor = S.hover ? 'pointer' : 'grab';
+    if (ptr.down && Math.hypot(e.clientX - ptr.down.x, e.clientY - ptr.down.y) < 5) { mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight * 2 - 1)); const id = pick(); select(id === S.selected ? null : id); }
+    ptr.down = null;
+  });
+  cv.addEventListener('dblclick', () => { select(null, false); goView(S.explodeTarget ? 'explode' : 'home'); });
+  controls.addEventListener('start', () => { camTween = null; });
+  addEventListener('resize', onResize);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) TM.hiddenAt = performance.now(); else if (TM.hiddenAt) { TM.sim += (performance.now() - TM.hiddenAt) / 1000 * S.speed; TM.hiddenAt = 0; } });
+  addEventListener('keydown', e => {
+    if (e.target && /input|textarea/i.test(e.target.tagName)) return;
+    const k = e.key.toLowerCase();
+    if (k === 'e') act('explode'); else if (k === 'l') act('labels'); else if (k === 'n') act('night'); else if (k === 'w') act('wind'); else if (k === 't') act('set'); else if (k === 'r') act('rotate');
+    else if (k === 'escape') select(null, false); else if (k === 'i') togglePanel();
+    else if (k === '[' || k === ']') { renderer.toneMappingExposure = clamp(renderer.toneMappingExposure + (k === ']' ? 0.1 : -0.1), 0.4, 2.2); flash('曝光 ' + renderer.toneMappingExposure.toFixed(1)); }
+    else if (k >= '1' && k <= '6') goView(['home', 'three', 'back', 'esc', 'balance', 'barrel'][+k - 1]);
+  });
+  // dock
+  $$('[data-act]').forEach(b => b.addEventListener('click', () => act(b.dataset.act)));
+  $$('[data-view]').forEach(b => b.addEventListener('click', () => goView(b.dataset.view)));
+  $$('[data-speed]').forEach(b => b.addEventListener('click', () => { S.speed = parseFloat(b.dataset.speed); $$('[data-speed]').forEach(x => x.classList.toggle('on', x === b)); }));
+  $('#ptoggle').addEventListener('click', () => togglePanel()); $('#pclose').addEventListener('click', () => togglePanel(false));
+  $('#qbtn').addEventListener('click', () => applyQuality((S.quality + 1) % 3));
+  // 鼠标跟随的名称提示
+  const tip = $('#tip');
+  setInterval(() => { if (S.hover && ptr.inside && !S.labels) { const p = parts[S.hover]; tip.innerHTML = `<b>${p.zh}</b><span>${p.en}</span>`; tip.style.transform = `translate(${Math.min(ptr.x + 16, innerWidth - 220)}px, ${ptr.y + 18}px)`; tip.classList.add('on'); } else tip.classList.remove('on'); }, 30);
+}
+function goView(name) {
+  const v = VIEWS[name]; if (!v) return;
+  $$('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === name));
+  if (name === 'home' || name === 'three' || name === 'front' || name === 'back') { if (S.explodeTarget && name !== 'back') { flyTo(VIEWS.explode); return; } }
+  flyTo(v);
+}
+function act(name) {
+  const btn = $(`[data-act="${name}"]`);
+  if (name === 'explode') {
+    S.explodeTarget = S.explodeTarget ? 0 : 1; btn.classList.toggle('on', !!S.explodeTarget);
+    flyTo(S.explodeTarget ? VIEWS.explode : VIEWS.home, 2.4);
+  } else if (name === 'labels') { S.labels = !S.labels; btn.classList.toggle('on', S.labels); }
+  else if (name === 'night') { S.nightTarget = S.nightTarget ? 0 : 1; btn.classList.toggle('on', !!S.nightTarget); }
+  else if (name === 'wind') { if (S.windAnim) return; if (S.wind > 0.985) { flash('发条已上满 — 请勿过度上链'); return; } S.windAnim = { t: 0, dur: 2.8, from: S.wind, to: Math.min(1, S.wind + 0.3) }; flash('顺时针转动表冠上链…'); }
+  else if (name === 'set') { if (S.setAnim) return; S.setAnim = { t: 0, dur: 2.2, from: S.setOffset, to: S.setOffset + TAU * 3 }; flash('拨针 +3 小时：指针脱离主轮系，独立转动'); }
+  else if (name === 'rotate') { S.autoRotate = !S.autoRotate; controls.autoRotate = S.autoRotate; btn.classList.toggle('on', S.autoRotate); }
+}
+let flashT = 0;
+function flash(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(flashT); flashT = setTimeout(() => el.classList.remove('on'), 2600); }
+function applyViewShift(dt) {
+  const tgt = (S.panel && innerWidth > 900) ? 186 : 0;
+  viewShift += (tgt - viewShift) * (dt > 0 ? 1 - Math.exp(-dt * 5) : 1);
+  if (Math.abs(viewShift) > 0.3) camera.setViewOffset(innerWidth, innerHeight, viewShift, 0, innerWidth, innerHeight); else camera.clearViewOffset();
+}
+function onResize() {
+  const w = innerWidth, h = innerHeight; camera.aspect = w / h; camera.updateProjectionMatrix(); applyViewShift(0);
+  renderer.setSize(w, h); composer.setSize(w, h); bloom.resolution.set(w, h);
+  if (floorMirror) { const tw = Math.max(256, Math.floor(w * 0.5 * (S.quality === 0 ? 0.5 : 1))), th = Math.max(256, Math.floor(h * 0.5 * (S.quality === 0 ? 0.5 : 1))); floorMirror.getRenderTarget().setSize(tw, th); floorMirror.material.uniforms.uTexel.value.set(1 / tw, 1 / th); }
+}
+function applyQuality(q) {
+  S.quality = q; $('#qbtn span').textContent = ['低', '中', '高'][q];
+  const dpr = window.devicePixelRatio || 1, pr = q === 2 ? Math.min(dpr, 2) : q === 1 ? Math.min(dpr, 1.4) : 1;
+  renderer.setPixelRatio(pr); composer.setPixelRatio(pr);
+  const ss = q === 2 ? 4096 : q === 1 ? 2048 : 1024;
+  if (keyLight.shadow.mapSize.x !== ss) { keyLight.shadow.mapSize.set(ss, ss); if (keyLight.shadow.map) { keyLight.shadow.map.dispose(); keyLight.shadow.map = null; } }
+  bloom.enabled = q > 0;
+  onResize();
+}
+
+/* ============================================================
+ *  收尾 / 主循环 / 启动
+ * ============================================================ */
+function makeLeaders() {
+  const pts = []; for (const p of [PL.C, PL.BAR, PL.T, PL.F4, PL.E, PL.F, PL.B, PL.Mw, PL.W, PL.P]) pts.push(p.x, p.y, -22, p.x, p.y, 54);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  leaderLines = new THREE.LineSegments(g, new THREE.LineDashedMaterial({ color: 0xe0bf7c, dashSize: 0.9, gapSize: 0.8, transparent: true, opacity: 0, depthWrite: false }));
+  leaderLines.computeLineDistances(); watch.add(leaderLines);
+}
+function finalize() {
+  setupAnchors();
+  parts.jewels.specs[1][1] = JEWELS.count + ' 颗'; parts.screws.specs[2][1] = SCREWS.count + ' 枚';
+  for (const id in parts) { const p = parts[id]; if (!p.anchorObj) console.warn('缺少锚点', id); for (const m of p.mats) if (!matPart.has(m)) matPart.set(m, p); }
+  computeDelays(); makeLeaders(); buildLabels();
+  // 零件目录
+  const byCat = {}; for (const id in parts) (byCat[parts[id].cat] = byCat[parts[id].cat] || []).push(id);
+  $('#plist').innerHTML = Object.keys(CAT).filter(c => byCat[c]).map(c => `<div class="pcat"><div class="pct" style="--c:${CAT[c].color}"><i></i>${CAT[c].zh}</div><div class="chips">${byCat[c].map(id => `<button class="chip" data-id="${id}">${parts[id].zh}</button>`).join('')}</div></div>`).join('');
+  $$('.chip').forEach(el => { const id = el.dataset.id; el.addEventListener('pointerenter', () => setHover(id)); el.addEventListener('pointerleave', () => setHover(null)); el.addEventListener('click', () => select(S.selected === id ? null : id)); });
+  // 规格表
+  $('#s-jewel').textContent = JEWELS.count + ' 颗'; $('#s-dia').textContent = (2 * PLATE_R).toFixed(1) + ' mm'; $('#s-thick').textContent = (Z.cock[1] + 0.14 - Z.plate[0]).toFixed(1) + ' mm';
+  let tri = 0; for (const m of pickables) tri += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3 * (m.isInstancedMesh ? m.count : 1);
+  $('#s-parts').textContent = pickables.length.toLocaleString('en-US') + ' 网格 · ' + Math.round(tri / 1000) + 'K 三角面';
+  showCard(null);
+  // 初始时间 = 本机时间
+  const d = new Date(), h = d.getHours() % 12, m = d.getMinutes(), s = d.getSeconds() + d.getMilliseconds() / 1000;
+  TM.alpha0 = (m + s / 60) / 60 * TAU; TM.hour0 = (h + (m + s / 60) / 60) / 12 * TAU; TM.sec0 = s / 60 * TAU; TM.B0 = escapement(0).beat;
+  updateKinematics(0); applyExplode();
+}
+let last = performance.now(), frames = 0, slow = 0, tAcc = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min((now - last) / 1000, 0.05); last = now; tAcc += dt;
+  if (!S.ready) return;
+  // 爆炸进度
+  S.explode += clamp(S.explodeTarget - S.explode, -dt / 3.0, dt / 3.0);
+  S.night += (S.nightTarget - S.night) * (1 - Math.exp(-dt * 2.4));
+  const k = updateKinematics(dt);
+  applyExplode(); stepCamera(dt); controls.update(); applyViewShift(dt); camera.updateMatrixWorld();
+  watch.position.y = Math.sin(tAcc * 0.7) * 0.28; watch.rotation.x = Math.sin(tAcc * 0.45) * 0.006;
+  // 背景光跟随相机方位；尘埃缓慢漂移
+  const back = camera.position.clone().sub(controls.target).normalize().negate(); backdropMat.uniforms.uGlowDir.value.set(back.x, 0.12, back.z);
+  dust.rotation.y += dt * 0.012; dust.position.y = Math.sin(tAcc * 0.2) * 1.2;
+  finalPass.uniforms.uTime.value = tAcc;
+  // 拾取 (每帧至多一次)
+  if (ptr.moved && ptr.inside && !ptr.down) { setHover(pick()); }
+  ptr.moved = false;
+  updateMaterials(dt); updateLabels(); updateHud(dt, k);
+  renderer.shadowMap.needsUpdate = true;
+  try { composer.render(); } catch (err) { if (!S.fallback) { S.fallback = true; console.error('后处理失败，回退到直接渲染：', err); flash('后处理不可用，已回退到基础渲染'); } renderer.render(scene, camera); }
+  // 自动降级
+  if (++frames > 60 && frames < 240) { if (dt > 0.034) slow++; if (frames === 239 && slow > 90 && S.quality > 0) { applyQuality(S.quality - 1); flash('检测到帧率偏低，已自动降低画质'); } }
+}
+function setLoader(p, msg) { $('#lbar').style.width = p + '%'; $('#lmsg').textContent = msg; }
+async function main() {
+  try {
+    setLoader(4, '初始化渲染器…'); await nextFrame();
+    initRenderer(); ENV.tex = buildEnvTexture(); scene.environment = ENV.tex;
+    initLights(); initBackdrop(); initFloor(); initDust(); initPost();
+    watch = new THREE.Group(); scene.add(watch);
+    initParts(); initInstGeos(); initMaterials();
+    const stages = [
+      ['铸造主夹板 · 珠圆纹…', buildPlate], ['绕制主发条 · 发条盒…', buildBarrel], ['切削齿轮 · 轮系…', buildTrainWheels],
+      ['装配擒纵机构 · 摆轮 · 游丝…', buildEscapement], ['雕琢夹板 · 日内瓦波纹…', buildBridges], ['装配上链机构…', buildKeyless],
+      ['装配时分轮系与指针…', () => { buildMotionWorks(); buildHands(); }], ['镶嵌刻度环与夜光时标…', buildDial], ['打磨表壳 · 蓝宝石水晶…', buildCase],
+    ];
+    let i = 0; for (const [msg, fn] of stages) { setLoader(8 + (++i) / stages.length * 84, msg); await nextFrame(); const t0 = performance.now(); fn(); console.debug('[build] ' + msg + ' ' + (performance.now() - t0).toFixed(0) + ' ms'); }
+    setLoader(96, '校准机芯…'); await nextFrame();
+    finalize(); bindEvents(); applyQuality(2);
+    setLoader(100, '完成'); S.ready = true; window.__watchReady = true;
+    setTimeout(() => $('#loader').classList.add('done'), 350);
+    // 开场：从爆炸态合拢并运镜
+    setTimeout(() => { S.explodeTarget = 0; $('[data-act="explode"]').classList.remove('on'); flyTo(VIEWS.home, 4.2); }, 900);
+    $$('[data-view="home"]').forEach(b => b.classList.add('on'));
+  } catch (err) { fatal(err); }
+}
+function fatal(err) {
+  console.error(err); const el = $('#fatal'); el.style.display = 'flex';
+  el.innerHTML = `<div><b>渲染出错</b><pre>${String(err && err.stack || err).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]))}</pre><p>请使用支持 WebGL2 的现代浏览器（Chrome / Edge / Safari / Firefox）。</p></div>`;
+  $('#loader').classList.add('done');
+}
+addEventListener('error', e => { if (!window.__watchReady) fatal(e.error || e.message); });
+requestAnimationFrame(frame);
+main();
+
+</script>
+</body>
+</html>
