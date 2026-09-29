@@ -1,0 +1,303 @@
+{
+  "ready": true,
+  "audio": "running",
+  "times": [
+    0.15009999999999857,
+    0.40009999999999857,
+    0.9000999999999986
+  ],
+  "pauseA": 0.9000999999999986,
+  "pauseB": 0.9000999999999986,
+  "uiSeek": 150,
+  "ended": {
+    "time": 300,
+    "state": "ended"
+  },
+  "errors": [],
+  "seekDeterministic": true,
+  "fullRun": [
+    {
+      "time": 0,
+      "state": "playing"
+    },
+    {
+      "time": 0,
+      "state": "playing"
+    },
+    {
+      "time": 0,
+      "state": "playing"
+    },
+    {
+      "time": 0.2663040000000037,
+      "state": "playing"
+    },
+    {
+      "time": 8.266304000000003,
+      "state": "playing"
+    },
+    {
+      "time": 16.266304000000005,
+      "state": "playing"
+    },
+    {
+      "time": 28.266304000000005,
+      "state": "playing"
+    },
+    {
+      "time": 36.266304000000005,
+      "state": "playing"
+    },
+    {
+      "time": 44.266304000000005,
+      "state": "playing"
+    },
+    {
+      "time": 48.266304000000005,
+      "state": "playing"
+    },
+    {
+      "time": 56.266304000000005,
+      "state": "playing"
+    },
+    {
+      "time": 64.266304,
+      "state": "playing"
+    },
+    {
+      "time": 76.266304,
+      "state": "playing"
+    },
+    {
+      "time": 88.266304,
+      "state": "playing"
+    },
+    {
+      "time": 97.33350400000019,
+      "state": "playing"
+    },
+    {
+      "time": 114.13190399999964,
+      "state": "playing"
+    },
+    {
+      "time": 124.79910399999983,
+      "state": "playing"
+    },
+    {
+      "time": 134.39910399999982,
+      "state": "playing"
+    },
+    {
+      "time": 138.39910399999982,
+      "state": "playing"
+    },
+    {
+      "time": 146.39910399999982,
+      "state": "playing"
+    },
+    {
+      "time": 158.66470399999992,
+      "state": "playing"
+    },
+    {
+      "time": 169.330304,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 173.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 177.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 185.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 189.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 189.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 193.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 197.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 197.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 197.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 201.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 201.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 201.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 201.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 205.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 205.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 209.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 209.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 213.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 213.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 213.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 217.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 217.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 221.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 221.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 221.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 225.59750400000019,
+      "state": "playing"
+    },
+    {
+      "time": 237.06310400000027,
+      "state": "playing"
+    },
+    {
+      "time": 241.06310400000027,
+      "state": "playing"
+    },
+    {
+      "time": 245.06310400000027,
+      "state": "playing"
+    },
+    {
+      "time": 251.73030400000044,
+      "state": "playing"
+    },
+    {
+      "time": 251.73030400000044,
+      "state": "playing"
+    },
+    {
+      "time": 262.66150400000015,
+      "state": "playing"
+    },
+    {
+      "time": 278.39430400000043,
+      "state": "playing"
+    },
+    {
+      "time": 282.39430400000043,
+      "state": "playing"
+    },
+    {
+      "time": 286.39430400000043,
+      "state": "playing"
+    },
+    {
+      "time": 290.39430400000043,
+      "state": "playing"
+    },
+    {
+      "time": 290.39430400000043,
+      "state": "playing"
+    },
+    {
+      "time": 294.39430400000043,
+      "state": "playing"
+    },
+    {
+      "time": 300,
+      "state": "ended"
+    }
+  ],
+  "duration": 300,
+  "shotCount": 27,
+  "voiceCount": 23,
+  "latestBuild": {
+    "bundle": "./assets/index-DerXgZnx.js",
+    "first": 0.6667999999999993,
+    "last": 2.2001000000000004,
+    "seek": 268,
+    "audio": "running",
+    "errors": []
+  }
+}

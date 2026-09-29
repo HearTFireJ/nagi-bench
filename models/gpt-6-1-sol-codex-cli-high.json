@@ -1,0 +1,52 @@
+{
+  "label": "GPT-6.1 Sol",
+  "vendor": "OpenAI",
+  "harness": "Codex CLI",
+  "effort": "High",
+  "artifactDir": "gpt-6-1-sol/codex-cli-high",
+  "runs": {
+    "beihai-meteorite": {
+      "note": {
+        "zh": "在本地通过 Codex CLI 以 gpt-6.1-sol（high）一次生成，未经修改，耗时 26 分 40 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。本页为其构建产物（部署时由源码打包为单文件）。",
+        "en": "One-shot by gpt-6.1-sol (high) in Codex CLI, unmodified, 26 minutes 40 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. This page is its build output (bundled from source into a single file at deploy time)."
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "cs-dust2": {
+      "note": {
+        "zh": "在本地通过 Codex CLI 以 gpt-6.1-sol（high）一次生成，未经修改，耗时 33 分 52 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。本页为其构建产物（部署时由源码打包为单文件）。",
+        "en": "One-shot by gpt-6.1-sol (high) in Codex CLI, unmodified, 33 minutes 52 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. This page is its build output (bundled from source into a single file at deploy time)."
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "mythos-craft": {
+      "note": {
+        "zh": "在本地通过 Codex CLI 以 gpt-6.1-sol（high）一次生成，未经修改，耗时 38 分 10 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by gpt-6.1-sol (high) in Codex CLI, unmodified, 38 minutes 10 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "pelican-cycling": {
+      "note": {
+        "zh": "在本地通过 Codex CLI 以 gpt-6.1-sol（high）一次生成，耗时 6 分钟。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。模型把 SVG 写到了工作区之外的 /mnt/data/（运行结束后沙箱销毁），工作区里只留下了生成它的脚本 create_svg.py；此处提交的 SVG 由维护者在一次性沙箱中原样运行该脚本得到（脚本固定随机种子，未改动任何内容）。",
+        "en": "One-shot by gpt-6.1-sol (high) in Codex CLI, 6 minutes. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. The model wrote the SVG outside the workspace to /mnt/data/, which is destroyed when the sandbox exits, leaving only the generator script create_svg.py in the workspace. The submitted SVG was obtained by the maintainer running that script unmodified in a throwaway sandbox (the script fixes its random seed; nothing was edited)."
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "skeleton-watch": {
+      "note": {
+        "zh": "在本地通过 Codex CLI 以 gpt-6.1-sol（high）一次生成，未经修改，耗时 31 分 42 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。",
+        "en": "One-shot by gpt-6.1-sol (high) in Codex CLI, unmodified, 31 minutes 42 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. "
+      },
+      "contributor": "Nagi-ovo"
+    },
+    "turf-war": {
+      "note": {
+        "zh": "在本地通过 Codex CLI 以 gpt-6.1-sol（high）一次生成，未经修改，耗时 21 分 56 秒。跑在 Agent Bench 隔离 runner：空 workspace、无 skill/plugin/MCP、No-Web。按案例规则策略文件不公开、仅注册运行；产出文件仅按模型 id 重命名，内容逐字节未改。自命名「缝海」。",
+        "en": "One-shot by gpt-6.1-sol (high) in Codex CLI, unmodified, 21 minutes 56 seconds. Run on the Agent Bench isolated runner: empty workspace, no skills/plugins/MCP, No-Web. Per case rules the policy file is unpublished; this registers the run. The produced file was only renamed to the model id, byte-identical otherwise. It named itself \"缝海\"."
+      },
+      "contributor": "Nagi-ovo",
+      "agentName": "缝海"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+// All authored speech. These seven fields are the complete dubbing contract.
+export const voiceCues = [
+{id:'v01',kind:'dialogue',speaker:'收藏者',text:'您是军人吧？我一眼就看出来了。',delivery:'温和、熟络，仿佛遇到老同事',start:19,end:25},
+{id:'v02',kind:'dialogue',speaker:'章北海',text:'您也曾经是军人。',delivery:'平静，带一点礼貌的笑意',start:28,end:31.5},
+{id:'v03',kind:'dialogue',speaker:'收藏者',text:'测绘局，大半辈子。后来在南极找到了这些。',delivery:'怀念；说到陨石时眼神亮起来',start:32,end:38},
+{id:'v04',kind:'dialogue',speaker:'收藏者',text:'每拿到一块，就像去了一个新的世界。',delivery:'轻声，带有孩子般的满足',start:43,end:49},
+{id:'v05',kind:'dialogue',speaker:'章北海',text:'地球也是一块大陨石。这杯茶，也来自星空。',delivery:'轻轻打趣，语气温暖',start:50,end:56},
+{id:'v06',kind:'dialogue',speaker:'章北海',text:'我要三块铁陨石。结实一些。',delivery:'收起笑意，简洁、坚定',start:58,end:62},
+{id:'v07',kind:'dialogue',speaker:'收藏者',text:'十八万。其实……您可以还价。',delivery:'试探，然后不好意思地笑',start:63,end:66.5},
+{id:'v08',kind:'dialogue',speaker:'章北海',text:'就这个价。表示我对要送的人的尊重。',delivery:'异常坚决；在“尊重”前稍作停顿',start:67,end:72.5},
+{id:'v09',kind:'monologue',speaker:'章北海',text:'有些人，仍然守着自己的小世界。',delivery:'内心，低而温柔；声音跨过剪辑',start:75,end:81},
+{id:'v09b',kind:'monologue',speaker:'章北海',text:'碎了，就只剩陨石。',delivery:'仔细端详碎屑，像在确认一个冷酷的答案',start:118,end:123},
+{id:'v10',kind:'scene',speaker:'会议主持',text:'增援未来计划：首批军官冬眠前，在太空实习一年。',delivery:'例行会议，清晰、正式',start:141,end:149},
+{id:'v11',kind:'dialogue',speaker:'航天专家',text:'先把眼前的船造好。恒星际航行？那是后人的事。',delivery:'年长，笃定；无恶意的谨慎',start:150,end:157},
+{id:'v12',kind:'monologue',speaker:'章北海',text:'他们开启了太空时代。也把未来，锁在了过去。',delivery:'冷静；后半句压低，不带怒气',start:159,end:166},
+{id:'v13',kind:'monologue',speaker:'章北海',text:'我要的是能驶向恒星的船。',delivery:'短促、坚硬，像早已作出的决定',start:176,end:180},
+{id:'v14',kind:'monologue',speaker:'章北海',text:'脚下没有大地。这里，只剩下我自己。',delivery:'独白，空旷而缓慢，长停顿',start:191,end:198},
+{id:'v15',kind:'monologue',speaker:'章北海',text:'父亲，您在那里，也是这种感觉吗？',delivery:'第一次露出脆弱；低声询问',start:202,end:209},
+{id:'v16',kind:'radio',speaker:'摄影师',text:'前排保持位置。等推进器的雾散开。',delivery:'工作口吻；短句，轻微通讯感',start:226,end:232},
+{id:'v17',kind:'radio',speaker:'摄影师',text:'面罩调透明。看这里。',delivery:'笑着招呼，准备按下快门',start:234,end:238},
+{id:'v18',kind:'monologue',speaker:'章北海',text:'他们也是无辜的。',delivery:'没有辩解；每个字都清楚，随后沉默',start:257,end:261},
+{id:'v19',kind:'radio',speaker:'与会者',text:'陨石雨！有人失压了！',delivery:'突发惊恐，急促、破音；不得添加合成人声',start:267,end:270.5},
+{id:'v20',kind:'radio',speaker:'救援员',text:'抓住他们！所有人回气闸！',delivery:'紧张但努力维持秩序',start:271,end:275},
+{id:'v21',kind:'monologue',speaker:'章北海',text:'我做了我能做的。',delivery:'空洞、平静；没有胜利感',start:280,end:285},
+{id:'v22',kind:'monologue',speaker:'收藏者',text:'不过，我还是相信自己的感觉。',delivery:'记忆中的声音，温暖、悠远',start:289,end:294}
+];

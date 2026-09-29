@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d0f">
+  <title>AUREL — 时间的内在宇宙</title>
+  <style>
+    :root{--bg:#0b0d0f;--ivory:#f0eee8;--muted:#85888b;--gold:#cdb493;--line:rgba(213,201,181,.16);--glass:rgba(17,20,23,.78)}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ivory)}
+    body{font-family:Inter,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
+    button,input{font:inherit}button{color:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:1px solid var(--gold);outline-offset:5px}
+    button{border:0;background:none}button:disabled{cursor:default;opacity:.4}button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+    #stage{position:absolute;inset:0 0 0 23%;touch-action:none}#stage canvas{display:block;width:100%;height:100%;outline:none}
+    .vignette{position:fixed;inset:0;background:linear-gradient(90deg,#0b0d0f 0%,rgba(11,13,15,.90) 17%,transparent 43%);pointer-events:none}
+    .grain{position:fixed;inset:0;opacity:.027;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23ffffff' filter='url(%23n)' opacity='.6' d='M0 0h160v160H0z'/%3E%3C/svg%3E")}
+    header{position:fixed;top:0;left:0;right:0;height:106px;padding:0 4.5%;display:flex;align-items:center;justify-content:space-between;z-index:20}
+    .brand{display:flex;gap:13px;align-items:center}.brand svg{width:28px;height:37px;stroke:var(--gold);fill:none;stroke-width:1}
+    .brand-name{font-family:Georgia,"Times New Roman",serif;font-size:27px;letter-spacing:7px}.brand-sub{font-size:7px;letter-spacing:3.6px;color:var(--muted);margin-top:6px}
+    .nav{display:flex;gap:36px;align-items:center;font-size:10px;letter-spacing:2px;color:#a8aaab}.nav button{padding:10px 0;color:#aaa;transition:color .25s}.nav button:hover{color:var(--ivory)}
+    .edition{color:var(--gold);font-size:10px;letter-spacing:2px}.nav-separator{width:1px;height:15px;background:var(--line)}
+    .render-status{font-size:9px;letter-spacing:1.3px;display:flex;align-items:center;gap:8px;color:var(--muted)}.status-dot{width:4px;height:4px;border-radius:50%;background:#b9c5b8;box-shadow:0 0 8px #b9c5b844}.icon-button{display:grid;place-items:center;padding:9px;border:1px solid transparent;border-radius:50%;color:#b5b8b9}.icon-button:hover{border-color:var(--line);color:white}
+    .hero{position:fixed;left:4.5%;top:25%;width:320px;z-index:5;pointer-events:none}.hero button{pointer-events:auto}
+    .eyebrow{display:flex;align-items:center;gap:12px;font-size:9px;letter-spacing:3px;color:var(--gold)}.eyebrow:before{content:"";width:26px;height:1px;background:var(--gold)}
+    h1{font-family:"Noto Serif SC","Songti SC",STSong,SimSun,Georgia,serif;font-weight:400;font-size:clamp(42px,4.15vw,68px);letter-spacing:4px;line-height:1.36;margin:26px 0 23px}
+    h1 span{display:block;color:#d0c4b2}.hero-description{font-size:12px;line-height:2.05;letter-spacing:.8px;color:#8f9396;margin:0;max-width:255px}
+    .primary{display:flex;align-items:center;justify-content:space-between;width:167px;margin-top:29px;padding:14px 18px;border:1px solid #786650;color:#dfc7a8;font-size:11px;letter-spacing:2px;transition:background .3s,border-color .3s}.primary:hover{background:#cdb49314;border-color:#cdb493}.primary svg{width:16px}
+    .specs{margin-top:38px;display:flex;gap:27px}.spec{border-right:1px solid var(--line);padding-right:24px}.spec:last-child{border:0;padding:0}.spec-value{font:25px Georgia,serif;color:#d5d0c7}.spec-value small{font:10px sans-serif;color:var(--gold);margin-left:4px}.spec-name{font-size:9px;letter-spacing:1px;color:#777c80;margin-top:9px}
+    .side-tools{position:fixed;right:4.3%;top:43%;display:flex;flex-direction:column;gap:13px;z-index:8}.tool{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0d101340;color:#999e9f;backdrop-filter:blur(10px);position:relative;transition:.25s}.tool:hover,.tool.active{border-color:#a58e6a;color:var(--gold);background:#1b1d20}.tool:before{content:attr(data-hint);position:absolute;right:50px;white-space:nowrap;font-size:10px;letter-spacing:1px;background:#11151bea;border:1px solid var(--line);padding:8px 12px;opacity:0;pointer-events:none;transition:opacity .2s}.tool:hover:before{opacity:1}
+    .scene-tag{position:fixed;right:4.5%;bottom:140px;z-index:4;text-align:right;pointer-events:none}.scene-tag b{font-size:10px;letter-spacing:3px;font-weight:400;color:#c6b79e}.scene-tag p{font-size:9px;letter-spacing:1.5px;margin:9px 0;color:#71787c}.tag-rule{width:36px;height:1px;background:#685a46;margin:17px 0 0 auto}
+    .dock-wrap{position:fixed;left:61.5%;bottom:55px;transform:translateX(-50%);z-index:15;display:flex;align-items:center;flex-direction:column;gap:13px}
+    .dock{display:flex;gap:3px;align-items:center;padding:6px;background:rgba(23,26,29,.85);border:1px solid var(--line);border-radius:40px;box-shadow:0 10px 40px #0004;backdrop-filter:blur(18px)}
+    .dock button{display:flex;align-items:center;gap:8px;padding:12px 15px;border-radius:28px;color:#999ea1;font-size:10px;letter-spacing:1px;white-space:nowrap;transition:.25s}.dock button:hover{color:white;background:#ffffff06}.dock button.active{color:#dfc5a2;background:#cdb49315}.dock button svg{width:16px;height:16px}.dock-div{height:18px;width:1px;background:var(--line);margin:0 4px}.dock .reset{padding:12px}.dock .reset svg{width:17px}
+    .gesture{font-size:9px;color:#73797d;letter-spacing:1.2px;transition:opacity .3s}.gesture span{margin:0 10px;color:#3e4549}
+    .explode-slider{display:flex;align-items:center;gap:12px;padding:10px 17px;background:#14191cdd;border:1px solid var(--line);border-radius:30px;font-size:9px;letter-spacing:1px;color:#aca396;max-height:50px;transition:opacity .25s,transform .25s;backdrop-filter:blur(15px)}.explode-slider.hidden{opacity:0;pointer-events:none;transform:translateY(10px);position:absolute;bottom:92px}.explode-slider:not(.hidden){position:absolute;bottom:92px}input[type=range]{accent-color:#c8ad89;width:120px;height:3px;cursor:pointer}
+    footer{position:fixed;left:4.5%;right:4.5%;bottom:25px;display:flex;justify-content:space-between;align-items:center;font-size:8px;letter-spacing:2px;color:#5e666b;z-index:5;pointer-events:none}.foot-note{letter-spacing:1px}
+    #labels{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3}.part-label{position:absolute;display:flex;align-items:center;gap:7px;font-size:9px;letter-spacing:1px;white-space:nowrap;pointer-events:auto;color:#d4c2a7;padding:6px 9px;background:rgba(13,17,20,.8);border:1px solid #b393602b;border-radius:3px;backdrop-filter:blur(8px);transition:opacity .25s,background .25s;transform:translate(15px,-50%)}.part-label:before{content:"";position:absolute;left:-17px;top:50%;width:16px;height:1px;background:#b3936060}.part-label:after{content:"";position:absolute;left:-19px;top:calc(50% - 2px);width:4px;height:4px;background:#c8a676;border-radius:50%;box-shadow:0 0 8px #c8a67666}.part-label small{color:#857a6a;font-size:8px}.part-label:hover{background:#3c3227}
+    #tooltip{position:fixed;display:none;z-index:25;pointer-events:none;background:#12171dec;border:1px solid #cdb49344;padding:11px 15px;backdrop-filter:blur(15px);font-size:11px;letter-spacing:1px;border-radius:3px;box-shadow:0 8px 28px #0005}#tooltip small{display:block;color:#8c9397;font-size:8px;margin-top:6px;letter-spacing:1.5px}
+    .panel{position:fixed;right:4.5%;top:123px;width:292px;max-height:calc(100% - 270px);background:linear-gradient(140deg,#1b1f23e8,#0f1316f5);border:1px solid var(--line);backdrop-filter:blur(25px);z-index:18;opacity:0;transform:translateX(24px);pointer-events:none;transition:opacity .35s,transform .35s;overflow:auto;scrollbar-width:thin;scrollbar-color:#5a5145 transparent}.panel.open{opacity:1;transform:translateX(0);pointer-events:auto}
+    .panel-header{padding:21px 23px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.panel-kicker{font-size:8px;letter-spacing:2.5px;color:var(--gold)}.panel-header h2{font-family:Georgia,"Songti SC",serif;font-size:20px;font-weight:400;letter-spacing:2px;margin:8px 0 0}.panel-header .icon-button{margin-right:-8px}
+    .component-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:17px 17px 0}.component-nav button{padding:8px 0;border:1px solid #ffffff09;color:#7f878c;font-size:9px;transition:.25s}.component-nav button:hover{color:#e0c6a1}.component-nav button.selected{background:#c8a97915;color:#d8bc96;border-color:#ac8a5944}
+    .part-content{padding:24px}.part-number{font:italic 40px Georgia,serif;color:#b89c743e;line-height:1}.part-content h3{font-family:"Songti SC",Georgia,serif;font-weight:400;font-size:22px;letter-spacing:2px;margin:12px 0 6px}.part-en{font-size:8px;letter-spacing:2px;color:#b89c74}.part-content p{font-size:11px;line-height:1.95;color:#929b9f;margin:17px 0 20px}.part-fact{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line);font-size:9px;color:#80898e;letter-spacing:.4px}.part-fact b{font-weight:400;color:#c6b79f}.panel-foot{padding:15px 24px;border-top:1px solid var(--line);font-size:8px;line-height:1.8;color:#657078;letter-spacing:.5px}
+    #loading{position:fixed;inset:0;z-index:100;background:#0b0d0f;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 1s}.load-brand{font:32px Georgia,serif;letter-spacing:10px;margin-left:10px;color:#ddc5a4}.load-line{width:140px;height:1px;background:#282925;margin:27px 0 20px;position:relative;overflow:hidden}.load-line:after{content:"";position:absolute;height:1px;width:60px;background:#cdb493;animation:loading 1.4s ease-in-out infinite}.load-caption{font-size:9px;letter-spacing:3px;color:#7d817f}.load-error{max-width:330px;text-align:center;font-size:12px;line-height:2;letter-spacing:1px;color:#aaa;padding:15px}#loading.done{opacity:0;pointer-events:none}.toast{position:fixed;top:115px;left:61.5%;transform:translate(-50%,-10px);z-index:30;opacity:0;pointer-events:none;color:#d8c7af;background:#171c20e8;border:1px solid var(--line);padding:12px 21px;font-size:10px;letter-spacing:1px;border-radius:3px;transition:.3s}.toast.show{transform:translate(-50%,0);opacity:1}
+    @keyframes loading{0%{left:-60px}100%{left:140px}}
+    @media(min-width:1700px){.hero{top:28%;width:400px}.hero-description{font-size:13px;max-width:300px}.specs{margin-top:45px}.panel{width:320px}}
+    @media(max-width:1100px){header{padding:0 5%;height:85px}.hero{left:5%;width:245px;top:24%}h1{font-size:43px}.hero-description{font-size:11px;max-width:220px}.nav{gap:19px}.specs{gap:17px}.spec{padding-right:16px}.side-tools{right:3%}.panel{right:3%;width:267px}.dock button{padding:12px 11px}.scene-tag{right:3%}#stage{left:20%}.dock-wrap{left:60%}}
+    @media(max-width:760px){header{height:75px;padding:0 6%}.brand-name{font-size:22px;letter-spacing:5px}.brand-sub{font-size:6px;letter-spacing:2.3px}.brand svg{width:23px;height:30px}.nav .edition,.nav-separator,.nav-text,.render-status{display:none}.nav{gap:8px}#stage{inset:125px -15% 80px -15%}.vignette{background:linear-gradient(180deg,#0b0d0f 0%,transparent 30%,transparent 72%,#0b0d0f 98%)}.hero{top:98px;left:6%;width:88%;pointer-events:none}.eyebrow{font-size:7px;letter-spacing:2px}h1{font-size:29px;line-height:1.2;letter-spacing:3px;margin:13px 0}h1 span{display:inline;color:#d0c4b2}.hero-description{max-width:none;font-size:9px;line-height:1.6;letter-spacing:.5px}.hero-description br{display:none}.primary,.specs{display:none}.side-tools{right:5%;top:44%;gap:12px}.tool{width:35px;height:35px}.tool svg{width:16px}.scene-tag{bottom:137px;right:6%}.scene-tag p{font-size:7px}.scene-tag b{font-size:8px}.tag-rule{margin-top:10px}.dock-wrap{left:50%;bottom:47px;width:100%;gap:12px}.dock{padding:4px;gap:0}.dock button{padding:11px 12px;font-size:9px;gap:6px}.dock .reset{padding:11px}.dock button svg{width:15px;height:15px}.gesture{font-size:8px;letter-spacing:.5px}.gesture span{margin:0 6px}footer{bottom:15px;left:6%;right:6%;font-size:6px;letter-spacing:1px}.foot-note{font-size:6px;letter-spacing:.3px}.panel{right:5%;top:225px;width:260px;max-height:calc(100% - 340px)}.panel-header{padding:15px 19px}.panel-header h2{font-size:17px}.part-content{padding:17px 20px}.part-number{font-size:27px}.part-content h3{font-size:19px}.part-content p{font-size:10px;margin:12px 0}.part-label{font-size:8px;padding:5px 7px}.toast{left:50%;top:205px;white-space:nowrap;font-size:9px}.explode-slider.hidden,.explode-slider:not(.hidden){bottom:83px}}
+    @media(max-width:390px){.dock button{padding:11px 10px}.dock button span{font-size:8px}.scene-tag{bottom:139px}.foot-note{display:none}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+  </style>
+  <script type="importmap">
+  {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
+  </script>
+</head>
+<body>
+  <div id="loading" role="status"><div class="load-brand">AUREL</div><div class="load-line"></div><div class="load-caption" id="load-caption">正在构筑时间的细节</div></div>
+  <div id="stage" aria-label="可交互的三维镂空机械腕表，拖动旋转，滚轮缩放"><div id="labels"></div></div>
+  <div class="vignette"></div><div class="grain"></div>
+  <header>
+    <div class="brand"><svg viewBox="0 0 28 37" aria-hidden="true"><path d="M14 2 2 31h24L14 2Z M8 23h12 M14 12 8 31 M14 12l6 19 M2 35h24"/></svg><div><div class="brand-name">AUREL</div><div class="brand-sub">ATELIER HORLOGER</div></div></div>
+    <nav class="nav" aria-label="展示导航"><span class="edition">SKELETON / 01</span><span class="nav-separator"></span><button class="nav-text" id="nav-info">机芯工艺</button><span class="render-status"><i class="status-dot"></i> LIVE 3D</span><button class="icon-button" id="fullscreen" aria-label="全屏展示" title="全屏展示"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></nav>
+  </header>
+  <main class="hero"><div class="eyebrow">THE ART OF SKELETON</div><h1>时间的<span>内在宇宙。</span></h1><p class="hero-description">褪去表盘，让精密成为风景。<br>每一次齿轮咬合，都是时间的回响。</p><button id="hero-explode" class="primary"><span>拆解时间</span><svg viewBox="0 0 24 24"><path d="M4 12h15m-5-5 5 5-5 5"/></svg></button><div class="specs"><div class="spec"><div class="spec-value">72<small>h</small></div><div class="spec-name">动力储存</div></div><div class="spec"><div class="spec-value">28</div><div class="spec-name">红宝石轴承</div></div><div class="spec"><div class="spec-value">4<small>Hz</small></div><div class="spec-name">摆轮频率</div></div></div></main>
+  <div class="side-tools"><button class="tool" id="info-toggle" aria-label="打开机芯信息" aria-expanded="false" data-hint="机芯档案"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v6m0-10v.5"/></svg></button><button class="tool" id="labels-toggle" aria-label="显示零件标签" aria-pressed="false" data-hint="零件标签"><svg viewBox="0 0 24 24"><path d="m3 4 8-.5L21 13l-8 8L3.5 11Z"/><circle cx="8" cy="8" r="1.5"/></svg></button><button class="tool" id="shot" aria-label="保存当前视角图片" data-hint="保存此刻"><svg viewBox="0 0 24 24"><path d="M3 7h4l2-3h6l2 3h4v13H3Z"/><circle cx="12" cy="13" r="4"/></svg></button></div>
+  <div class="scene-tag"><b>CALIBRE A01</b><p>手动上链 · 全镂空机芯</p><div class="tag-rule"></div></div>
+  <div class="dock-wrap"><div id="explode-slider" class="explode-slider hidden"><label for="separation">分解程度</label><input id="separation" type="range" min="0" max="100" value="100" aria-label="爆炸视图分解程度"><span id="separation-value">100%</span></div><div class="dock" role="toolbar" aria-label="三维展示控制"><button id="rotate" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9c1.5-3.2 6-5 10-3.5 4 1.4 6 4.5 5 7.5M4 9l-.5-5M4 9l5-1m11 7c-1.5 3.2-6 5-10 3.5-4-1.4-6-4.5-5-7.5m15 4 .5 5m-.5-5-5 1"/></svg><span>旋转</span></button><button id="explode" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="m3 7 9-5 9 5-9 5Z M3 12l9 5 9-5 M3 17l9 5 9-5"/></svg><span>分解</span></button><div class="dock-div"></div><button id="night" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 14A8.5 8.5 0 0 1 10 3a8.5 8.5 0 1 0 10 11Z"/></svg><span>夜光</span></button><button id="pause" aria-pressed="false"><svg id="pause-icon" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg><span>暂停</span></button><div class="dock-div"></div><button id="reset" class="reset" aria-label="重置视角" title="重置视角"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 .5 6 M4 4v6h6"/></svg></button></div><div class="gesture">拖动旋转<span>·</span>滚轮缩放<span>·</span>点击探索机芯</div></div>
+  <aside id="panel" class="panel" aria-label="机芯信息" aria-hidden="true"><div class="panel-header"><div><div class="panel-kicker">INSIDE THE MOVEMENT</div><h2>机芯档案</h2></div><button class="icon-button" id="panel-close" aria-label="关闭机芯信息"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="component-nav" id="component-nav"></div><div class="part-content"><div id="part-number" class="part-number">01</div><h3 id="part-title">主发条与发条盒</h3><div id="part-en" class="part-en">THE SOURCE OF ENERGY</div><p id="part-description"></p><div id="part-facts"></div></div><div class="panel-foot">A01 为概念展示机芯。运动经过可视化处理，用于呈现机械制表的结构与韵律。</div></aside>
+  <div id="tooltip"></div><div id="toast" class="toast" role="status"></div><footer><span>AUREL © 2026 &nbsp; / &nbsp; MECHANICAL POETRY</span><span class="foot-note">光影之间，见证机械之美。</span></footer>
+
+  <script type="module">
+    // All geometry, finishes and studio textures are generated in this document.
+    // Only the pinned Three.js library and its official addons use the CDN.
+    const $ = id => document.getElementById(id);
+    const loadingTimeout = setTimeout(() => {
+      $('load-caption').textContent = '正在连接 3D 渲染引擎…';
+    }, 12000);
+    try {
+      const THREE = await import('three');
+      const [{OrbitControls},{Reflector},{EffectComposer},{RenderPass},{UnrealBloomPass},{OutputPass},{RectAreaLightUniformsLib}] = await Promise.all([
+        import('three/addons/controls/OrbitControls.js'),
+        import('three/addons/objects/Reflector.js'),
+        import('three/addons/postprocessing/EffectComposer.js'),
+        import('three/addons/postprocessing/RenderPass.js'),
+        import('three/addons/postprocessing/UnrealBloomPass.js'),
+        import('three/addons/postprocessing/OutputPass.js'),
+        import('three/addons/lights/RectAreaLightUniformsLib.js')
+      ]);
+      RectAreaLightUniformsLib.init();
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const stage = $('stage'), scene = new THREE.Scene();
+      scene.background = new THREE.Color('#0b0d0f');
+      scene.fog = new THREE.FogExp2('#0b0d0f', .026);
+      const renderer = new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance',preserveDrawingBuffer:true});
+      const gpuInfo=renderer.getContext().getExtension('WEBGL_debug_renderer_info');
+      const gpuName=gpuInfo?renderer.getContext().getParameter(gpuInfo.UNMASKED_RENDERER_WEBGL):'';
+      const softwareGPU=/swiftshader|llvmpipe|software/i.test(gpuName);
+      renderer.setPixelRatio(softwareGPU?.65:Math.min(devicePixelRatio, 1.65));
+      renderer.setSize(stage.clientWidth,stage.clientHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      stage.prepend(renderer.domElement);
+      renderer.domElement.setAttribute('aria-label','AUREL 镂空机械腕表 3D 模型');
+      const camera = new THREE.PerspectiveCamera(32,stage.clientWidth/stage.clientHeight,.1,80);
+      camera.zoom=innerWidth<=760?.9:1;camera.updateProjectionMatrix();
+      const home = new THREE.Vector3(2.5,2.35,13.8);
+      camera.position.copy(home);
+      const controls = new OrbitControls(camera,renderer.domElement);
+      controls.target.set(0,.05,0);controls.enableDamping=true;controls.dampingFactor=.06;
+      controls.enablePan=false;controls.minDistance=6.3;controls.maxDistance=22;
+      controls.autoRotateSpeed=.65;controls.rotateSpeed=.52;controls.zoomSpeed=.65;
+      controls.minPolarAngle=.12;controls.maxPolarAngle=Math.PI-.12;
+
+      // Large warm / cool studio panels create long, photographic metal reflections.
+      const studio = new THREE.Scene();
+      studio.add(new THREE.Mesh(new THREE.SphereGeometry(25,24,16),new THREE.MeshBasicMaterial({color:0x17191d,side:THREE.BackSide})));
+      function softbox(x,y,z,w,h,power,color=0xffffff){
+        const box=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(power),side:THREE.DoubleSide}));
+        box.position.set(x,y,z);box.lookAt(0,0,0);studio.add(box);
+      }
+      softbox(-5,4,6,3,8,5,0xffead1);softbox(5,2,4,2,7,4,0xcbdfff);
+      softbox(0,7,0,7,3,5);softbox(-1,-3,5,5,1,2.5,0xffcc93);
+      softbox(1,2,-5,5,4,3,0xd5dfff);softbox(0,0,8,.6,9,1.8);
+      const pmrem=new THREE.PMREMGenerator(renderer);pmrem.compileCubemapShader();
+      const environment=pmrem.fromScene(studio,.035,.1,50);
+      scene.environment=environment.texture;scene.environmentIntensity=.95;
+      pmrem.dispose();studio.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});
+
+      const key=new THREE.SpotLight(0xffe4c4,110,30,.55,.75,1.5);
+      key.position.set(-4,7,8);key.target.position.set(0,0,0);key.castShadow=true;
+      key.shadow.mapSize.set(softwareGPU?512:2048,softwareGPU?512:2048);key.shadow.bias=-.0003;key.shadow.normalBias=.015;
+      key.shadow.camera.near=.5;key.shadow.camera.far=25;scene.add(key,key.target);
+      const fill=new THREE.RectAreaLight(0xb8d5ff,11,5,7);fill.position.set(5,1,5);fill.lookAt(0,0,0);scene.add(fill);
+      const rim=new THREE.RectAreaLight(0xffd9ac,17,4,3);rim.position.set(-3,2,-4);rim.lookAt(0,0,0);scene.add(rim);
+      const overhead=new THREE.RectAreaLight(0xffffff,9,6,3);overhead.position.set(0,6,1);overhead.lookAt(0,0,0);scene.add(overhead);
+      if(softwareGPU){fill.visible=false;rim.visible=false;overhead.visible=false;}
+      scene.add(new THREE.AmbientLight(0xb8c7d6,.13));
+
+      // A dark, softly blurred reflection grounds the floating product.
+      const mirror=new Reflector(new THREE.PlaneGeometry(70,70),{textureWidth:softwareGPU?256:768,textureHeight:softwareGPU?256:768,multisample:0,clipBias:.003,color:0x353d43});
+      mirror.rotation.x=-Math.PI/2;mirror.position.y=-4.72;
+      mirror.material.fragmentShader=mirror.material.fragmentShader.replace('vec4 base = texture2DProj( tDiffuse, vUv );',
+        'vec4 base = texture2DProj( tDiffuse, vUv ) * 0.28;\n'+
+        'base += texture2DProj( tDiffuse, vUv + vec4(0.003,0.001,0.0,0.0)) * 0.18;\n'+
+        'base += texture2DProj( tDiffuse, vUv - vec4(0.003,0.001,0.0,0.0)) * 0.18;\n'+
+        'base += texture2DProj( tDiffuse, vUv + vec4(0.0,0.004,0.0,0.0)) * 0.18;\n'+
+        'base += texture2DProj( tDiffuse, vUv - vec4(0.0,0.004,0.0,0.0)) * 0.18;')
+        .replace('gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );','gl_FragColor = vec4( mix(vec3(0.012, 0.014, 0.017), base.rgb * 0.21, 0.5), 1.0 );');
+      mirror.visible=!softwareGPU;
+      scene.add(mirror);
+      const shadowFloor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({color:0x000000,opacity:.36}));
+      shadowFloor.rotation.x=-Math.PI/2;shadowFloor.position.y=-4.71;shadowFloor.receiveShadow=true;scene.add(shadowFloor);
+
+      let seed=94;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
+      function canvasTexture(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return t;}
+      const brushed=canvasTexture(512,512,(ctx,w,h)=>{ctx.fillStyle='#aaaaaa';ctx.fillRect(0,0,w,h);for(let i=0;i<6500;i++){const v=95+random()*90;ctx.strokeStyle=`rgba(${v},${v},${v},${.08+random()*.22})`;ctx.lineWidth=.5;const y=random()*h;ctx.beginPath();ctx.moveTo(random()*w,y);ctx.lineTo(w,y+(random()-.5)*2);ctx.stroke();}});
+      brushed.wrapS=brushed.wrapT=THREE.RepeatWrapping;brushed.repeat.set(2,2);
+      const leatherTex=canvasTexture(512,1024,(ctx,w,h)=>{
+        ctx.fillStyle='#111619';ctx.fillRect(0,0,w,h);
+        for(let row=-1;row<14;row++){let x=-70;const y=row*84;while(x<w){const cw=65+random()*66,ch=65+random()*15;const v=22+Math.floor(random()*10);ctx.fillStyle=`rgb(${v},${v+3},${v+4})`;ctx.strokeStyle='#080b0d';ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(x+3,y+3+random()*6,cw-6,ch,8+random()*9);ctx.fill();ctx.stroke();ctx.strokeStyle='#38404655';ctx.lineWidth=1;ctx.stroke();x+=cw;}}
+        for(let i=0;i<32000;i++){const v=random()>.5?70:0;ctx.fillStyle=`rgba(${v},${v},${v},.11)`;ctx.fillRect(random()*w,random()*h,1,1);}
+      });leatherTex.colorSpace=THREE.SRGBColorSpace;
+      const metal=(color,roughness=.26,extra={})=>new THREE.MeshPhysicalMaterial({color,metalness:1,roughness,envMapIntensity:1,clearcoat:.28,clearcoatRoughness:.18,...extra});
+      const mat={
+        steel:metal('#b9bec1',.22,{roughnessMap:brushed}),polished:metal('#d5dade',.13),gold:metal('#d6ac66',.25),rose:metal('#b8865d',.2),
+        dark:metal('#353d43',.33,{roughnessMap:brushed}),black:metal('#181e22',.31),bridge:metal('#59616a',.3,{roughnessMap:brushed}),
+        blue:metal('#164b83',.22),spring:metal('#9dabc0',.3),screw:metal('#bec7cd',.19),
+        ruby:new THREE.MeshPhysicalMaterial({color:'#b7164b',metalness:.1,roughness:.1,transmission:softwareGPU?0:.16,thickness:.12,ior:1.77,clearcoat:1,emissive:'#63081e',emissiveIntensity:.16}),
+        lume:new THREE.MeshStandardMaterial({color:'#d6e8c5',roughness:.3,metalness:.08,emissive:'#91f5c6',emissiveIntensity:.24}),
+        leather:new THREE.MeshStandardMaterial({color:'#60686e',map:leatherTex,bumpMap:leatherTex,bumpScale:.032,roughness:.77,metalness:.02}),
+        stitch:new THREE.MeshStandardMaterial({color:'#78746b',roughness:1}),
+        glass:new THREE.MeshPhysicalMaterial({color:softwareGPU?'#193044':'#ebf5ff',metalness:0,roughness:.018,transmission:softwareGPU?0:1,thickness:.13,ior:1.77,transparent:true,opacity:softwareGPU?.035:.18,clearcoat:1,clearcoatRoughness:.015,envMapIntensity:.65,depthWrite:false}),
+        etched:new THREE.MeshBasicMaterial({color:'#bfb09b',transparent:true,opacity:.65})
+      };
+      const watch=new THREE.Group();watch.rotation.set(-.04,-.06,-.18);watch.position.y=.05;scene.add(watch);
+      const parts={};const pickables=[];const animated=[];const layers=[];const lumeMaterials=[];
+      const partData={
+        spring:{n:'01',short:'发条盒',title:'主发条与发条盒',en:'THE SOURCE OF ENERGY',desc:'一根盘绕的金属发条，将上链时的能量缓缓释放。镂空发条盒让原本隐藏的动力之源显露出来，驱动整套齿轮系持续运转。',facts:[['设计动力储存','72 小时'],['上链方式','手动上链'],['表面处理','缎面打磨 · 镂空桶盖']]},
+        train:{n:'02',short:'齿轮系',title:'传动齿轮系',en:'A CHOREOGRAPHY OF PRECISION',desc:'大小不同的黄铜轮与钢制小齿轴组成传动路径。能量沿齿轮逐级传递，转速随齿数比例变化，将发条的力量转换为可被读出的时间。',facts:[['轮系结构','中心轮 · 三轮 · 四轮'],['材质','黄铜 / 抛光钢'],['工艺','倒角轮辐 · 细切齿形']]},
+        balance:{n:'03',short:'摆轮',title:'摆轮与蓝钢游丝',en:'THE BEATING HEART',desc:'摆轮往复摆动，蓝钢游丝随之收缩与舒展。二者构成机芯的调速系统，以规律的振荡为机械时间建立节拍。外缘的配重螺钉与内侧的游丝均可近距离观察。',facts:[['设计频率','4 Hz / 28,800 次每小时'],['游丝','蓝钢平面螺旋'],['结构','配重摆轮 · 开放式摆夹板']]},
+        escape:{n:'04',short:'擒纵',title:'擒纵轮与擒纵叉',en:'ENERGY, ONE BEAT AT A TIME',desc:'擒纵叉交替锁住与释放擒纵轮，将连续的轮系动力切分成细小脉冲。红宝石叉瓦减少接触磨损，并将动力传递给摆轮，维持其振荡。',facts:[['形式','瑞士杠杆式示意'],['叉瓦','合成红宝石'],['运动','间歇释放 · 交替锁止']]},
+        bridge:{n:'05',short:'夹板',title:'镂空夹板',en:'ARCHITECTURE IN MINIATURE',desc:'弧形夹板与开放式底板共同支撑轮系。铑黑表面衬托抛光金色倒角，蓝钢螺钉与宝石轴承镶嵌其间，让微型机械兼具刚性与通透的建筑感。',facts:[['表面处理','铑黑 · 缎面拉丝'],['边缘','香槟金抛光倒角'],['固定','蓝钢螺钉']]},
+        jewel:{n:'06',short:'宝石',title:'红宝石轴承',en:'SMALL DETAILS. LASTING MOTION.',desc:'合成红宝石构成坚硬、耐磨的轴承孔，降低轮轴旋转时的摩擦。鲜红的宝石被安置于金色套筒之中，是复杂机械中最鲜明的色彩标记。',facts:[['概念机芯配置','28 颗宝石'],['材质','合成刚玉'],['作用','降低摩擦 · 支撑轮轴']]},
+        case:{n:'07',short:'表壳',title:'表壳与蓝宝石镜面',en:'A WINDOW INTO TIME',desc:'多层抛光表壳围绕镂空机芯，纤细的香槟金内圈勾勒表盘边缘。微拱蓝宝石镜面保留轻盈反射，开放式底盖让结构从背面也能被看见。',facts:[['概念表径','42 mm'],['表壳','抛光钢 · 香槟金内圈'],['镜面','双面蓝宝石水晶']]},
+        hands:{n:'08',short:'指针',title:'夜光指针与时标',en:'LIGHT, HELD IN THE DARK',desc:'镂空剑形指针穿过机械层次，绿色蓄光嵌条与立体时标共同标示时间。切换夜光模式，环境光会缓缓降低，让柔和的青绿色光芒浮现。',facts:[['显示','时 · 分 · 中央秒针'],['夜光','青绿色蓄光示意'],['指针','倒角剑形 · 蓝钢秒针']]}
+      };
+      function part(id,parent=watch){const g=new THREE.Group();parent.add(g);g.userData.part=id;if(!parts[id])parts[id]={groups:[],meshes:[],anchor:null,materials:[]};parts[id].groups.push(g);return g;}
+      function layer(id,amount){const g=part(id);g.userData.explode=amount;layers.push(g);return g;}
+      const caseG=layer('case',0),backG=layer('case',-1.2),baseG=layer('bridge',-.7),trainG=layer('train',.22),barrelG=layer('spring',.25),balanceLayer=layer('balance',.34),escapeLayer=layer('escape',.3),bridgeG=layer('bridge',1.02),dialG=layer('hands',1.52),handsG=layer('hands',1.97),glassG=layer('case',2.45);
+      function addMesh(geometry,material,parent,x=0,y=0,z=0,pick=true){
+        if(!geometry.boundingSphere)geometry.computeBoundingSphere();
+        const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=material!==mat.glass&&geometry.boundingSphere.radius>.16;m.receiveShadow=true;parent.add(m);
+        let p=parent,id;while(p&&!id){id=p.userData.part;p=p.parent;}
+        if(id&&pick){m.userData.part=id;parts[id].meshes.push(m);pickables.push(m);}
+        return m;
+      }
+      const boxGeo=new Map();function box(w,h,d,material,parent,x=0,y=0,z=0){const key=[w,h,d].join(',');let g=boxGeo.get(key);if(!g){g=new THREE.BoxGeometry(w,h,d);boxGeo.set(key,g);}return addMesh(g,material,parent,x,y,z);}
+      function disk(r,h,material,parent,x=0,y=0,z=0,segments=64,pick=true){const m=addMesh(new THREE.CylinderGeometry(r,r,h,segments),material,parent,x,y,z,pick);m.rotation.x=Math.PI/2;return m;}
+      function torus(r,t,material,parent,x=0,y=0,z=0,segments=96){return addMesh(new THREE.TorusGeometry(r,t,8,segments),material,parent,x,y,z);}
+      function ringGeometry(outer,inner,depth,bevel=.018){const s=new THREE.Shape();s.absarc(0,0,outer,0,Math.PI*2,false);const hole=new THREE.Path();hole.absarc(0,0,inner,0,Math.PI*2,true);s.holes.push(hole);return new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:bevel>0,bevelSegments:3,steps:1,bevelSize:bevel,bevelThickness:bevel,curveSegments:outer>.8?80:outer>.25?40:16});}
+      function ring(outer,inner,depth,material,parent,x=0,y=0,z=0,bevel=.018){return addMesh(ringGeometry(outer,inner,depth,bevel),material,parent,x,y,z);}
+      function shapeMesh(shape,depth,material,parent,x=0,y=0,z=0,bevel=.018){return addMesh(new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelSegments:3,steps:1,bevelSize:bevel,bevelThickness:bevel,curveSegments:30}),material,parent,x,y,z);}
+      function screw(parent,x,y,z,r=.054,blue=false){
+        disk(r*1.35,.025,mat.gold,parent,x,y,z-.015,24);disk(r,.039,blue?mat.blue:mat.screw,parent,x,y,z+.006,24);
+        const slit=box(r*1.45,.012,.008,mat.black,parent,x,y,z+.03);slit.rotation.z=(x*9+y*7)%Math.PI;
+        torus(r*.84,.003,mat.polished,parent,x,y,z+.027,24);
+      }
+      const jewelG=part('jewel',bridgeG);
+      function jewel(parent,x,y,z,r=.041){const g=parent===bridgeG?jewelG:part('jewel',parent);ring(r*1.8,r*.91,.023,mat.gold,g,x,y,z,.004);disk(r,.031,mat.ruby,g,x,y,z+.021,24);disk(r*.24,.012,mat.polished,g,x,y,z+.044,16);}
+      function ribbonSpiral(radius,turns,width,depth,material,parent,x,y,z,start=.06){
+        const ptsA=[],ptsB=[],segments=Math.ceil(turns*100);
+        for(let i=0;i<=segments;i++){const a=i/segments*turns*Math.PI*2,r=start+(radius-start)*i/segments;ptsA.push(new THREE.Vector2(Math.cos(a)*(r-width/2),Math.sin(a)*(r-width/2)));ptsB.push(new THREE.Vector2(Math.cos(a)*(r+width/2),Math.sin(a)*(r+width/2)));}
+        const s=new THREE.Shape();s.moveTo(ptsA[0].x,ptsA[0].y);ptsA.slice(1).forEach(p=>s.lineTo(p.x,p.y));ptsB.reverse().forEach(p=>s.lineTo(p.x,p.y));s.closePath();
+        return addMesh(new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false,steps:1,curveSegments:6}),material,parent,x,y,z);
+      }
+      function textPlane(text,width,height,parent,x,y,z,color='#dbcab0',fontSize=60){
+        const tex=canvasTexture(1024,256,(ctx,w,h)=>{ctx.clearRect(0,0,w,h);ctx.fillStyle=color;ctx.font=`${fontSize}px Georgia, serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,w/2,h/2);});tex.colorSpace=THREE.SRGBColorSpace;
+        return addMesh(new THREE.PlaneGeometry(width,height),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,opacity:.94}),parent,x,y,z,false);
+      }
+
+      // Sculpted case: caseback, brushed midcase, polished bezel and crystal seal.
+      ring(2.075,1.78,.13,mat.steel,backG,0,0,-.39,.025);torus(1.94,.035,mat.polished,backG,0,0,-.42);
+      disk(1.78,.025,mat.glass,backG,0,0,-.38,96,false);
+      for(let i=0;i<8;i++){const a=i*Math.PI/4; screw(backG,1.96*Math.sin(a),1.96*Math.cos(a),-.405,.052);}
+      ring(2.14,1.84,.47,mat.dark,caseG,0,0,-.27,.042);
+      ring(2.178,2.096,.27,mat.steel,caseG,0,0,-.20,.023);
+      torus(2.155,.03,mat.polished,caseG,0,0,-.21);torus(2.158,.022,mat.rose,caseG,0,0,.13);
+      ring(2.165,1.85,.18,mat.polished,caseG,0,0,.25,.035);
+      ring(2.085,1.924,.025,mat.steel,caseG,0,0,.453,.009);
+      for(let r=1.944;r<2.071;r+=.011)torus(r,.0014,mat.dark,caseG,0,0,.486,144);
+      torus(2.103,.017,mat.polished,caseG,0,0,.482);
+      ring(1.926,1.85,.08,mat.rose,caseG,0,0,.43,.011);torus(1.861,.012,mat.gold,caseG,0,0,.518);
+
+      // Curved lugs and an embossed, stitched alligator-style leather strap.
+      for(const side of [-1,1]){
+        for(const sx of [-1,1]){
+          const s=new THREE.Shape();s.moveTo(sx*.67,side*1.86);s.lineTo(sx*1.20,side*1.71);s.quadraticCurveTo(sx*1.26,side*2.02,sx*.98,side*2.50);s.lineTo(sx*.77,side*2.48);s.quadraticCurveTo(sx*.93,side*2.17,sx*.67,side*1.86);
+          shapeMesh(s,.32,mat.steel,caseG,0,0,-.21,.06);
+          screw(caseG,sx*.98,side*2.16,.17,.045);
+        }
+        const bar=disk(.061,1.69,mat.polished,caseG,0,side*2.33,-.07,24);bar.rotation.set(0,0,Math.PI/2);
+        const strap=new THREE.Shape();strap.moveTo(-.79,side*2.17);strap.lineTo(.79,side*2.17);strap.lineTo(.66,side*4.28);strap.quadraticCurveTo(.60,side*4.48,0,side*4.50);strap.quadraticCurveTo(-.60,side*4.48,-.66,side*4.28);strap.closePath();
+        const leather=shapeMesh(strap,.15,mat.leather,caseG,0,0,-.16,.035);
+        // UVs normalized to strap dimensions so the leather grain is correctly scaled.
+        const uv=leather.geometry.attributes.uv,pos=leather.geometry.attributes.position;
+        for(let i=0;i<uv.count;i++)uv.setXY(i,(pos.getX(i)+.8)/1.6,(Math.abs(pos.getY(i))-2.17)/2.4);uv.needsUpdate=true;
+        for(const sx of [-1,1])for(let i=0;i<25;i++){const y=2.30+i*.078,x=sx*(.70-(y-2.3)*.05);const stitch=box(.018,.042,.009,mat.stitch,caseG,x,side*y,.027);stitch.rotation.z=sx*side*.10;}
+        for(let k=0;k<3;k++)box(1.4,.025,.023,mat.black,caseG,0,side*(2.27+k*.044),.013);
+        if(side<0)for(let i=0;i<6;i++){const hole=ring(.058,.035,.006,mat.black,caseG,0,-2.89-i*.235,.021,.003);hole.scale.x=.65;}
+      }
+      const crown=part('case',caseG);
+      const stem=disk(.12,.30,mat.polished,crown,2.16,0,-.015,32);stem.rotation.set(0,0,Math.PI/2);
+      const crownBody=disk(.245,.34,mat.steel,crown,2.43,0,-.015,64);crownBody.rotation.set(0,0,Math.PI/2);
+      for(let i=0;i<48;i++){const a=i*Math.PI*2/48;const ridge=box(.30,.017,.035,mat.polished,crown,2.43,Math.sin(a)*.241,Math.cos(a)*.241-.015);ridge.rotation.x=-a;}
+      for(const x of [2.27,2.59]){const collar=torus(.228,.018,mat.rose,crown,x,0,-.015,64);collar.rotation.y=Math.PI/2;}
+      const crownFace=disk(.201,.012,mat.dark,crown,2.61,0,-.015,48);crownFace.rotation.set(0,0,Math.PI/2);
+      const crownLogo=textPlane('A',.22,.22,crown,2.62,0,-.015,'#d7c2a3',105);crownLogo.rotation.y=Math.PI/2;
+
+      // Open annular mainplate with machined support ribs, perlage and tiny screws.
+      ring(1.72,1.50,.11,mat.dark,baseG,0,0,-.10,.018);
+      ring(1.68,1.58,.024,mat.gold,baseG,0,0,.015,.004);
+      for(let i=0;i<72;i++){const a=i*Math.PI/36;disk(.035,.004,mat.bridge,baseG,Math.sin(a)*1.635,Math.cos(a)*1.635,.045,16);}
+      function rail(parent,x1,y1,x2,y2,width,z,material){const len=Math.hypot(x2-x1,y2-y1);const m=box(width,len,.09,material,parent,(x1+x2)/2,(y1+y2)/2,z);m.rotation.z=-Math.atan2(x2-x1,y2-y1);return m;}
+      rail(baseG,-1.43,.6,-.8,-.22,.18,-.02,mat.bridge);rail(baseG,-.8,-.22,.30,.20,.15,-.02,mat.bridge);
+      rail(baseG,.3,.2,1.45,.48,.14,-.02,mat.bridge);rail(baseG,.30,.20,.79,1.45,.13,-.02,mat.bridge);
+      rail(baseG,.28,.20,.81,-1.41,.13,-.02,mat.bridge);rail(baseG,-1.46,-.58,-.9,-1.34,.15,-.02,mat.bridge);
+      for(let i=0;i<12;i++){const a=i*Math.PI/6+.13;screw(baseG,1.605*Math.cos(a),1.605*Math.sin(a),.07,.039,i%3===0);}
+      for(const [x,y] of [[-.69,.75],[.41,.67],[.77,-.07],[.25,-.43],[-.21,-.64],[-.57,-1.12]]){
+        disk(.12,.08,mat.gold,baseG,x,y,.065,32);jewel(baseG,x,y,.12,.035);
+      }
+
+      // Involute-inspired openwork gears, actual teeth and beveled wheel spokes.
+      function gearGeometry(r,teeth,depth,escape=false){
+        const s=new THREE.Shape(),pitch=Math.PI*2/teeth;
+        for(let i=0;i<teeth;i++)for(let j=0;j<4;j++){
+          const a=i*pitch+pitch*[.04,.23,.55,.78][j];let radius=r*(j===1||j===2?1:.905);
+          if(escape)radius=r*[.80,1,.97,.79][j];const x=Math.cos(a)*radius,y=Math.sin(a)*radius;
+          if(i===0&&j===0)s.moveTo(x,y);else s.lineTo(x,y);
+        }s.closePath();const hole=new THREE.Path();hole.absarc(0,0,r*.72,0,Math.PI*2,true);s.holes.push(hole);
+        return new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:true,bevelThickness:.005,bevelSize:.004,bevelSegments:2,curveSegments:48});
+      }
+      function gear(parent,x,y,z,r,teeth,spokes,speed,escape=false){
+        const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);
+        addMesh(gearGeometry(r,teeth,.034,escape),escape?mat.polished:mat.gold,g);
+        torus(r*.745,.008,mat.rose,g,0,0,.041,64);
+        disk(r*.16,.068,mat.gold,g,0,0,.029,32);disk(r*.083,.115,mat.polished,g,0,0,.042,24);
+        for(let i=0;i<spokes;i++){const a=i*Math.PI*2/spokes;const spoke=box(r*.105,r*.68,.031,mat.gold,g,Math.sin(a)*r*.42,Math.cos(a)*r*.42,.021);spoke.rotation.z=-a;}
+        const pinion=addMesh(gearGeometry(r*.225,12,.055),mat.steel,g,0,0,-.075);
+        animated.push({g,speed,escape});return g;
+      }
+      // Ratios derive from tooth counts; angular velocities alternate at each mesh.
+      const barrel=new THREE.Group();barrel.position.set(-.69,.75,.20);barrelG.add(barrel);
+      addMesh(gearGeometry(.65,72,.10),mat.gold,barrel);ring(.589,.548,.057,mat.dark,barrel,0,0,.071,.006);
+      ribbonSpiral(.534,8.6,.015,.020,mat.spring,barrel,0,0,.087,.072);
+      disk(.067,.18,mat.polished,barrel,0,0,.13,24);disk(.124,.035,mat.gold,barrel,0,0,.218,32);
+      for(let i=0;i<6;i++){const a=i*Math.PI/3;const spoke=box(.033,.45,.024,mat.gold,barrel,Math.sin(a)*.34,Math.cos(a)*.34,.152);spoke.rotation.z=-a;screw(barrel,.59*Math.sin(a),.59*Math.cos(a),.139,.019);}
+      torus(.563,.014,mat.gold,barrel,0,0,.153,80);
+      animated.push({g:barrel,speed:.018});
+      const second=gear(trainG,.41,.67,.23,.48,54,5,-.018*72/54);
+      const third=gear(trainG,.77,-.07,.30,.34,40,5,.018*72/40);
+      const fourth=gear(trainG,.25,-.43,.23,.28,32,5,-.018*72/32);
+      const escapeWheel=gear(escapeLayer,-.21,-.64,.30,.225,15,4,0,true);
+      gear(trainG,-1.04,-.20,.15,.285,36,6,.085);gear(trainG,-1.29,-.64,.13,.22,28,5,-.085*36/28);
+      gear(trainG,1.20,.91,.14,.215,26,5,-.055);gear(trainG,1.43,.54,.19,.22,28,5,.055*26/28);
+      // Brass reduction wheels behind the display lend the mechanism real depth.
+      gear(trainG,.69,-1.14,.08,.39,44,6,.05);gear(trainG,.08,1.32,.13,.235,30,5,-.038);
+
+      // Balance rim, timing screws and a real flat-ribbon blue-steel hairspring.
+      const balance=new THREE.Group();balance.position.set(-.57,-1.12,.39);balanceLayer.add(balance);
+      ring(.551,.506,.054,mat.gold,balance,0,0,0,.009);torus(.533,.012,mat.polished,balance,0,0,.06,80);
+      for(let i=0;i<3;i++){const a=i*Math.PI*2/3;const spoke=box(.035,.45,.025,mat.gold,balance,Math.sin(a)*.272,Math.cos(a)*.272,.027);spoke.rotation.z=-a;}
+      for(let i=0;i<16;i++){const a=i*Math.PI/8;const m=disk(.023,.045,mat.rose,balance,Math.cos(a)*.56,Math.sin(a)*.56,.03,12);m.rotation.set(0,Math.PI/2,-a);}
+      disk(.067,.16,mat.polished,balance,0,0,.08,24);
+      const hairspring=new THREE.Group();hairspring.position.z=.079;balance.add(hairspring);
+      ribbonSpiral(.443,8.2,.0055,.006,mat.blue,hairspring,0,0,0,.07);
+      torus(.069,.009,mat.blue,balance,0,0,.09,32);jewel(balanceLayer,-.57,-1.12,.558,.045);
+      const pallet=new THREE.Group();pallet.position.set(-.08,-.92,.45);escapeLayer.add(pallet);
+      rail(pallet,-.09,.015,.09,.015,.032,0,mat.polished);rail(pallet,0,.01,0,-.18,.031,0,mat.polished);
+      const forkA=box(.025,.068,.028,mat.polished,pallet,-.027,-.193,.02);const forkB=box(.025,.068,.028,mat.polished,pallet,.027,-.193,.02);
+      box(.039,.061,.03,mat.ruby,pallet,-.104,.055,.045);box(.039,.061,.03,mat.ruby,pallet,.104,.055,.045);
+      disk(.025,.065,mat.blue,pallet,0,0,.035,16);
+
+      // Skeletonized bridges are hand-drawn curved shapes, with a gold bevel below.
+      function bridge(shape){const gold=shapeMesh(shape,.073,mat.gold,bridgeG,0,0,.39,.026);const top=shapeMesh(shape,.050,mat.bridge,bridgeG,0,0,.459,.009);return top;}
+      const upper=new THREE.Shape();upper.moveTo(.26,.63);upper.bezierCurveTo(.26,.80,.49,.88,.65,.93);upper.lineTo(1.27,1.26);upper.quadraticCurveTo(1.45,1.15,1.42,.99);upper.lineTo(.69,.75);upper.quadraticCurveTo(.51,.70,.50,.56);upper.lineTo(.23,.15);upper.quadraticCurveTo(.05,.11,-.05,.19);upper.lineTo(.26,.63);bridge(upper);
+      const middle=new THREE.Shape();middle.moveTo(-1.48,.27);middle.quadraticCurveTo(-1.2,.16,-.92,.06);middle.bezierCurveTo(-.43,-.12,-.16,-.05,.29,.13);middle.quadraticCurveTo(.65,.28,.94,.26);middle.lineTo(1.54,.16);middle.lineTo(1.57,.36);middle.lineTo(.97,.44);middle.quadraticCurveTo(.63,.48,.27,.32);middle.bezierCurveTo(-.16,.16,-.39,.08,-.85,.23);middle.lineTo(-1.40,.49);middle.closePath();bridge(middle);
+      const barrelBridge=new THREE.Shape();barrelBridge.moveTo(-1.40,1.09);barrelBridge.quadraticCurveTo(-1.05,1.00,-.76,.82);barrelBridge.quadraticCurveTo(-.61,.69,-.55,.61);barrelBridge.lineTo(-.71,.55);barrelBridge.quadraticCurveTo(-.82,.72,-1.02,.80);barrelBridge.lineTo(-1.51,.90);barrelBridge.closePath();bridge(barrelBridge);
+      const balanceBridge=new THREE.Shape();balanceBridge.moveTo(-1.34,-.96);balanceBridge.quadraticCurveTo(-1.00,-1.02,-.66,-1.04);balanceBridge.quadraticCurveTo(-.43,-1.08,-.45,-1.18);balanceBridge.quadraticCurveTo(-.49,-1.27,-.65,-1.21);balanceBridge.lineTo(-1.33,-1.14);balanceBridge.closePath();bridge(balanceBridge);
+      const escapeBridge=new THREE.Shape();escapeBridge.moveTo(.58,-1.46);escapeBridge.lineTo(.65,-1.31);escapeBridge.quadraticCurveTo(.27,-1.05,-.08,-.84);escapeBridge.quadraticCurveTo(-.24,-.79,-.29,-.65);escapeBridge.lineTo(-.14,-.58);escapeBridge.quadraticCurveTo(-.12,-.74,.06,-.76);escapeBridge.closePath();bridge(escapeBridge);
+      for(const [x,y] of [[1.29,1.08],[-1.42,1.00],[-1.40,.36],[1.44,.26],[-1.30,-1.045],[.61,-1.36],[.17,.23]])screw(bridgeG,x,y,.553,.055,true);
+      for(const [x,y] of [[-.69,.75],[.41,.67],[.25,.20],[-.57,-1.12],[-.21,-.64]])jewel(bridgeG,x,y,.535,.04);
+      const extraJewels=[[1.16,1.18],[1.33,.82],[1.51,.31],[1.51,-.26],[1.45,-.68],[1.22,-1.10],[.86,-1.35],[.39,-1.50],[-.16,-1.57],[-.98,-1.23],[-1.38,-.76],[-1.53,-.31],[-1.48,.65],[-1.12,1.30],[-.52,1.53],[.42,1.52]];
+      extraJewels.forEach(([x,y])=>jewel(bridgeG,x,y,.35,.025));
+      textPlane('A 0 1',.40,.09,bridgeG,.98,.33,.526,'#c5bba9',85);
+
+      // Floating chapter ring, applied luminous batons, minute track and engravings.
+      ring(1.842,1.602,.055,mat.black,dialG,0,0,.58,.012);
+      torus(1.61,.011,mat.rose,dialG,0,0,.648);torus(1.831,.008,mat.gold,dialG,0,0,.649);
+      for(let i=0;i<60;i++){
+        const a=i*Math.PI/30,r=1.756;const major=i%5===0;
+        const mark=box(major?.053:.013,major?.153:.055,major?.037:.015,major?mat.polished:mat.etched,dialG,Math.sin(a)*r,Math.cos(a)*r,.658);mark.rotation.z=-a;
+        if(major){const lume=box(.030,.112,.009,mat.lume,dialG,Math.sin(a)*r,Math.cos(a)*r,.684);lume.rotation.z=-a;}
+      }
+      for(const [text,y] of [['12',1.49],['6',-1.49]])textPlane(text,.25,.16,dialG,0,y,.67,'#e5ddce',120);
+      textPlane('A U R E L',.69,.15,dialG,0,1.14,.64,'#dcd1bc',85);
+      textPlane('M A N U F A C T U R E',.72,.07,dialG,0,.996,.64,'#959087',52);
+      textPlane('SWISS  •  CONCEPT',.64,.064,dialG,0,-1.625,.688,'#c9bba5',48);
+
+      function hand(length,width,tail,material,z){
+        const s=new THREE.Shape();s.moveTo(-width*.5,-tail);s.lineTo(-width*.5,length*.34);s.lineTo(-width*.30,length*.84);s.lineTo(0,length);s.lineTo(width*.30,length*.84);s.lineTo(width*.5,length*.34);s.lineTo(width*.5,-tail);s.closePath();
+        const g=new THREE.Group();g.position.z=z;handsG.add(g);shapeMesh(s,.022,material,g,0,0,0,.009);
+        const inset=new THREE.Shape();inset.moveTo(-width*.21,length*.23);inset.lineTo(-width*.15,length*.78);inset.lineTo(0,length*.92);inset.lineTo(width*.15,length*.78);inset.lineTo(width*.21,length*.23);inset.closePath();shapeMesh(inset,.005,mat.lume,g,0,0,.029,.002);
+        ring(.09,.042,.022,material,g,0,0,0,.006);return g;
+      }
+      const hourHand=hand(1.01,.12,.18,mat.polished,.72),minuteHand=hand(1.49,.088,.24,mat.polished,.79);
+      const secondHand=new THREE.Group();secondHand.position.z=.866;handsG.add(secondHand);
+      box(.019,1.82,.014,mat.blue,secondHand,0,.55,.015);ring(.085,.054,.012,mat.rose,secondHand,0,-.295,.017,.004);
+      disk(.096,.066,mat.polished,handsG,0,0,.873,32);disk(.057,.025,mat.blue,handsG,0,0,.915,32);torus(.062,.005,mat.gold,handsG,0,0,.932,32);
+
+      // A very shallow dome gives the sapphire a natural reflected highlight.
+      const crystalGeo=new THREE.SphereGeometry(21,100,16,0,Math.PI*2,0,Math.asin(1.825/21));
+      crystalGeo.rotateX(Math.PI/2);crystalGeo.translate(0,0,-20.05);
+      const crystal=addMesh(crystalGeo,mat.glass,glassG,0,0,0,false);crystal.renderOrder=8;
+      torus(1.823,.012,mat.polished,glassG,0,0,.871,120);
+
+      // Every selectable component owns its finish so highlighting is isolated.
+      for(const [id,p] of Object.entries(parts)){
+        const materialMap=new Map();
+        p.meshes.forEach(m=>{if(m.material===mat.glass)return;let clone=materialMap.get(m.material);if(!clone){clone=m.material.clone();if(clone.emissive){clone.userData.originalEmissive=clone.emissive.clone();clone.userData.originalIntensity=clone.emissiveIntensity;}
+          materialMap.set(m.material,clone);p.materials.push(clone);if(m.material===mat.lume)lumeMaterials.push(clone);}
+          m.material=clone;
+        });
+      }
+      // Batch static details within each layer; moving wheels remain independent.
+      // Baked normals and UVs preserve every bevel while reducing draw calls.
+      const staticParents=[];
+      watch.traverse(o=>{if(o.children.some(c=>c.isMesh))staticParents.push(o);});
+      for(const parent of staticParents){
+        const batches=new Map();
+        for(const mesh of parent.children){
+          if(!mesh.isMesh||!mesh.userData.part||mesh.material.transparent)continue;
+          const key=mesh.material.uuid+mesh.userData.part+mesh.castShadow;
+          if(!batches.has(key))batches.set(key,[]);batches.get(key).push(mesh);
+        }
+        for(const meshes of batches.values()){
+          if(meshes.length<3)continue;
+          const geometries=meshes.map(mesh=>{mesh.updateMatrix();const g=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();g.applyMatrix4(mesh.matrix);return g;});
+          const combined=new THREE.BufferGeometry();
+          for(const name of ['position','normal','uv']){
+            const size=geometries[0].attributes[name].itemSize;
+            const count=geometries.reduce((sum,g)=>sum+g.attributes[name].array.length,0);
+            const values=new Float32Array(count);let offset=0;
+            geometries.forEach(g=>{values.set(g.attributes[name].array,offset);offset+=g.attributes[name].array.length;});
+            combined.setAttribute(name,new THREE.BufferAttribute(values,size));
+          }
+          combined.computeBoundingSphere();
+          const merged=new THREE.Mesh(combined,meshes[0].material);
+          merged.userData.part=meshes[0].userData.part;merged.castShadow=meshes[0].castShadow;merged.receiveShadow=true;
+          meshes.forEach(mesh=>parent.remove(mesh));geometries.forEach(g=>g.dispose());parent.add(merged);
+        }
+      }
+      pickables.length=0;Object.values(parts).forEach(p=>p.meshes=[]);
+      watch.traverse(mesh=>{if(mesh.isMesh&&mesh.userData.part){pickables.push(mesh);parts[mesh.userData.part].meshes.push(mesh);}});
+      const anchors={spring:[barrelG,-.69,.75,.42],train:[trainG,.77,-.07,.40],balance:[balanceLayer,-.57,-1.12,.57],escape:[escapeLayer,-.21,-.64,.46],bridge:[bridgeG,1.27,1.08,.55],jewel:[jewelG,.41,.67,.60],case:[caseG,1.97,.28,.50],hands:[handsG,0,.33,.90]};
+      for(const [id,[g,x,y,z]] of Object.entries(anchors)){const a=new THREE.Object3D();a.position.set(x,y,z);g.add(a);parts[id].anchor=a;}
+
+      const target=new THREE.WebGLRenderTarget(stage.clientWidth,stage.clientHeight,{type:THREE.HalfFloatType});target.samples=softwareGPU?0:4;
+      const composer=new EffectComposer(renderer,target);composer.addPass(new RenderPass(scene,camera));
+      const bloom=new UnrealBloomPass(new THREE.Vector2(stage.clientWidth,stage.clientHeight),.16,.42,1.15);composer.addPass(bloom);composer.addPass(new OutputPass());
+      let isExploded=false,explodeAmount=1,explosion=0,nightTarget=0,nightLevel=0,paused=reducedMotion,labelsVisible=false,selected='spring',hovered=null;
+      let movementTime=0,handTime=0,toastTimer,transition=null,activeHighlight='';
+      const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2(3,3),projected=new THREE.Vector3();let pointerDown=null,dragging=false,pointerActive=false,lastPointer={x:0,y:0};
+      const labelElements={};
+      for(const [id,data] of Object.entries(partData)){
+        const b=document.createElement('button');b.textContent=data.short;b.dataset.id=id;b.setAttribute('aria-label','查看'+data.title);b.addEventListener('click',()=>selectPart(id,true));$('component-nav').appendChild(b);
+        if(['spring','train','balance','escape','bridge','jewel'].includes(id)){
+          const label=document.createElement('button');label.className='part-label';label.innerHTML=`<small>${data.n}</small>${data.short}`;label.style.display='none';label.addEventListener('click',()=>selectPart(id,true));$('labels').appendChild(label);labelElements[id]=label;
+        }
+      }
+      function pressed(id,value){$(id).classList.toggle('active',value);$(id).setAttribute('aria-pressed',String(value));}
+      function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2400);}
+      function panelOpen(open){$('panel').classList.toggle('open',open);$('panel').setAttribute('aria-hidden',String(!open));$('info-toggle').classList.toggle('active',open);$('info-toggle').setAttribute('aria-expanded',String(open));}
+      function selectPart(id,open=false){
+        selected=id;const d=partData[id];$('part-number').textContent=d.n;$('part-title').textContent=d.title;$('part-en').textContent=d.en;$('part-description').textContent=d.desc;
+        $('part-facts').replaceChildren();d.facts.forEach(([a,b])=>{const row=document.createElement('div');row.className='part-fact';const label=document.createElement('span'),value=document.createElement('b');label.textContent=a;value.textContent=b;row.append(label,value);$('part-facts').appendChild(row);});
+        [...$('component-nav').children].forEach(b=>b.classList.toggle('selected',b.dataset.id===id));if(open)panelOpen(true);
+      }
+      function toggleExplosion(){
+        isExploded=!isExploded;pressed('explode',isExploded);$('explode-slider').classList.toggle('hidden',!isExploded);
+        $('hero-explode').querySelector('span').textContent=isExploded?'合拢时间':'拆解时间';
+        controls.autoRotate=false;pressed('rotate',false);
+        startCamera(isExploded?new THREE.Vector3(8.9,4.2,13.4):home,new THREE.Vector3(0,.05,isExploded?.65:0));
+        toast(isExploded?'沿轴向展开 · 探索机芯的每一层':'机芯已合拢');
+      }
+      function startCamera(position,targetPosition){transition={from:camera.position.clone(),to:position.clone(),targetFrom:controls.target.clone(),targetTo:targetPosition.clone(),time:0};}
+      $('explode').onclick=toggleExplosion;$('hero-explode').onclick=toggleExplosion;
+      $('separation').oninput=e=>{explodeAmount=Number(e.target.value)/100;$('separation-value').textContent=e.target.value+'%';};
+      $('rotate').onclick=()=>{controls.autoRotate=!controls.autoRotate;pressed('rotate',controls.autoRotate);};
+      $('night').onclick=()=>{nightTarget=1-nightTarget;pressed('night',!!nightTarget);toast(nightTarget?'夜光模式 · 青绿色蓄光指针':'摄影棚照明');};
+      function updatePause(){pressed('pause',paused);$('pause').querySelector('span').textContent=paused?'继续':'暂停';$('pause-icon').innerHTML=paused?'<path d="m8 4 11 8-11 8Z"/>':'<path d="M8 5v14M16 5v14"/>';$('pause').setAttribute('aria-label',paused?'继续机芯动画':'暂停机芯动画');}
+      $('pause').onclick=()=>{paused=!paused;updatePause();};updatePause();
+      $('reset').onclick=()=>{controls.autoRotate=false;pressed('rotate',false);startCamera(isExploded?new THREE.Vector3(8.9,4.2,13.4):home,new THREE.Vector3(0,.05,isExploded?.65:0));toast('已恢复展示视角');};
+      $('info-toggle').onclick=() => panelOpen(!$('panel').classList.contains('open'));
+      $('nav-info').onclick=()=>panelOpen(true);$('panel-close').onclick=()=>panelOpen(false);
+      $('labels-toggle').onclick=()=>{labelsVisible=!labelsVisible;pressed('labels-toggle',labelsVisible);};
+      $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('当前浏览器不支持全屏模式');}};
+      $('shot').onclick=()=>{
+        renderFrame();const a=document.createElement('a');a.download='AUREL-Skeleton-01.png';a.href=renderer.domElement.toDataURL('image/png');a.click();toast('已保存当前 3D 视角');
+      };
+      window.addEventListener('keydown',e=>{if(e.target instanceof HTMLInputElement)return;if(e.key==='Escape'){panelOpen(false);hovered=null;}if(e.code==='Space'&&e.target===document.body){e.preventDefault();paused=!paused;updatePause();}});
+      controls.addEventListener('start',()=>{transition=null;});
+      renderer.domElement.addEventListener('pointerdown',e=>{pointerDown={x:e.clientX,y:e.clientY};dragging=false;});
+      renderer.domElement.addEventListener('pointermove',e=>{
+        const rect=stage.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);
+        lastPointer={x:e.clientX,y:e.clientY};pointerActive=true;if(pointerDown&&Math.hypot(e.clientX-pointerDown.x,e.clientY-pointerDown.y)>5){dragging=true;hovered=null;$('tooltip').style.display='none';}
+      });
+      renderer.domElement.addEventListener('pointerup',e=>{
+        if(pointerDown&&!dragging&&Math.hypot(e.clientX-pointerDown.x,e.clientY-pointerDown.y)<6){
+          const rect=stage.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);if(hits.length)selectPart(hits[0].object.userData.part,true);
+        }pointerDown=null;dragging=false;
+      });
+      renderer.domElement.addEventListener('pointerleave',()=>{pointerActive=false;pointerDown=null;dragging=false;hovered=null;$('tooltip').style.display='none';renderer.domElement.style.cursor='grab';});
+      renderer.domElement.addEventListener('pointercancel',()=>{pointerDown=null;dragging=false;});
+      renderer.domElement.style.cursor='grab';
+      let lastHoverTime=0;
+      function updateHover(now){
+        if(!pointerActive||dragging||now-lastHoverTime<65)return;lastHoverTime=now;raycaster.setFromCamera(pointer,camera);
+        const hits=raycaster.intersectObjects(pickables,false);hovered=hits.length?hits[0].object.userData.part:null;
+        const tip=$('tooltip');renderer.domElement.style.cursor=hovered?'pointer':'grab';
+        if(hovered){tip.innerHTML=partData[hovered].title+'<small>点击查看结构与工艺</small>';tip.style.display='block';tip.style.left=Math.min(lastPointer.x+18,innerWidth-190)+'px';tip.style.top=Math.min(lastPointer.y+18,innerHeight-70)+'px';}else tip.style.display='none';
+      }
+      function updateHighlights(){
+        const selectedActive=$('panel').classList.contains('open')?selected:null;
+        const signature=[hovered,selectedActive,nightLevel.toFixed(2)].join(':');if(signature===activeHighlight)return;activeHighlight=signature;
+        for(const [id,p] of Object.entries(parts))p.materials.forEach(m=>{
+          if(!m.emissive)return;
+          if(lumeMaterials.includes(m)){m.emissive.set('#8bffcf');m.emissiveIntensity=.24+nightLevel*3.1;return;}
+          const highlight=id===hovered?.22:id===selectedActive?.11:0;
+          if(highlight){m.emissive.set('#c09a60');m.emissiveIntensity=highlight;}else{m.emissive.copy(m.userData.originalEmissive);m.emissiveIntensity=m.userData.originalIntensity;}
+        });
+      }
+      function updateLabels(){
+        const facing=new THREE.Vector3(0,0,1).transformDirection(watch.matrixWorld).dot(camera.position.clone().sub(watch.position).normalize());
+        for(const [id,label] of Object.entries(labelElements)){
+          if(!labelsVisible||facing<.1){label.style.display='none';continue;}
+          parts[id].anchor.getWorldPosition(projected);projected.project(camera);
+          if(projected.z>1||projected.z< -1){label.style.display='none';continue;}
+          label.style.display='flex';label.style.left=(projected.x*.5+.5)*stage.clientWidth+'px';label.style.top=(-projected.y*.5+.5)*stage.clientHeight+'px';
+        }
+      }
+      function resize(){
+        camera.aspect=stage.clientWidth/stage.clientHeight;camera.zoom=innerWidth<=760?.9:1;camera.updateProjectionMatrix();renderer.setSize(stage.clientWidth,stage.clientHeight);composer.setSize(stage.clientWidth,stage.clientHeight);
+      }
+      new ResizeObserver(resize).observe(stage);
+      // Deliberately starts at the classic 10:08 product-photography hand position.
+      function animateMovement(){
+        for(const a of animated){if(a.escape){const beats=movementTime*8,n=Math.floor(beats),f=beats-n,ease=Math.min(1,f*5);a.g.rotation.z=-(n+ease)*Math.PI*2/15;}else a.g.rotation.z=movementTime*a.speed;}
+        balance.rotation.z=Math.sin(movementTime*Math.PI*8)*.60;
+        hairspring.scale.setScalar(1+Math.sin(movementTime*Math.PI*8)*.035);
+        pallet.rotation.z=Math.tanh(Math.sin(movementTime*Math.PI*8)*5)*.16;
+        const seconds=12+handTime,minutes=8+seconds/60,hours=10+minutes/60;
+        hourHand.rotation.z=-hours*Math.PI/6;minuteHand.rotation.z=-minutes*Math.PI/30;secondHand.rotation.z=-seconds*Math.PI/30;
+      }
+      let previous=performance.now(),visible=true;
+      document.addEventListener('visibilitychange',()=>{visible=!document.hidden;previous=performance.now();});
+      function renderFrame(){composer.render();}
+      renderer.setAnimationLoop(now=>{
+        if(!visible)return;const elapsed=Math.min((now-previous)/1000,1),dt=Math.min(elapsed,.05);previous=now;
+        if(!paused){movementTime+=dt;handTime+=dt;}
+        const smooth=1-Math.exp(-elapsed*4.8);
+        explosion+=((isExploded?explodeAmount:0)-explosion)*smooth;
+        nightLevel+=(nightTarget-nightLevel)*smooth;
+        for(const layer of layers)layer.position.z=layer.userData.explode*explosion;
+        if(transition){transition.time+=elapsed;const p=Math.min(transition.time/1.5,1),s=p*p*(3-2*p);camera.position.lerpVectors(transition.from,transition.to,s);controls.target.lerpVectors(transition.targetFrom,transition.targetTo,s);if(p===1)transition=null;}
+        key.intensity=110*(1-nightLevel*.96);fill.intensity=11*(1-nightLevel*.96);rim.intensity=17*(1-nightLevel*.92);overhead.intensity=9*(1-nightLevel*.98);
+        scene.environmentIntensity=.95*(1-nightLevel*.94);bloom.strength=.16+nightLevel*.40;bloom.threshold=1.15-nightLevel*.4;
+        controls.update(dt);animateMovement();watch.updateMatrixWorld(true);updateHover(now);updateHighlights();updateLabels();renderFrame();
+      });
+      selectPart('spring');animateMovement();controls.update();renderFrame();
+      clearTimeout(loadingTimeout);$('loading').classList.add('done');setTimeout(()=>$('loading').remove(),1300);
+      // Small diagnostic surface, useful when reviewing this standalone file.
+      window.aurel={scene,watch,renderer,camera,controls,parts,get state(){return{isExploded,explosion,nightLevel,paused,labelsVisible,selected}},selectPart};
+    }catch(error){
+      clearTimeout(loadingTimeout);console.error('AUREL renderer:',error);
+      $('load-caption').className='load-error';$('load-caption').textContent='3D 引擎未能加载。请确认网络可访问 jsDelivr，并使用支持 WebGL 2 的现代浏览器打开此文件。';
+      document.querySelector('.load-line').style.display='none';
+    }
+  </script>
+</body>
+</html>
