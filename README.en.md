@@ -42,6 +42,7 @@ One-shot LLM eval cases by NAGI STUDIO: same prompt, different model x harness x
 | Claude Sonnet 4.6 | Anthropic | Claude Code · Max<br>Cursor · High | 03 |
 | Claude Opus 4.5 | Anthropic | Cursor · Thinking | 02 |
 | Claude Haiku 4.5 | Anthropic | Claude Code · Default | 02 |
+| GPT-6.1 Sol | OpenAI | Codex CLI · High | 06 |
 | GPT-6 Astra | OpenAI | Codex CLI · xhigh | 06 |
 | GPT-6 Sol | OpenAI | Codex CLI · xhigh | 06 |
 | GPT-5.6-Sol | OpenAI | Codex CLI · ultra<br>Codex CLI · max<br>Codex CLI · xhigh | 10 |
