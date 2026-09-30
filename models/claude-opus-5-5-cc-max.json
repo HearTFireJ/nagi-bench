@@ -1,0 +1,17 @@
+{
+  "label": "Claude Opus 5.5",
+  "vendor": "Anthropic",
+  "harness": "Claude Code",
+  "effort": "Max",
+  "artifactDir": "claude-opus-5-5/claude-code-max",
+  "order": 8.3,
+  "runs": {
+    "pelican-cycling": {
+      "note": {
+        "zh": "在本地通过 Claude Code CLI 以 claude-opus-5-5（max）一次生成，未经修改，耗时 46 分 1 秒。空 workspace，关闭全部 skill（含 claude.ai 同步与内置 skill）、插件（含内置插件）与 MCP/连接器，禁用 WebFetch/WebSearch，无自定义系统提示。模型输出文件名为 pelican-bicycle.svg，此处按仓库规范无内容改动地重命名为 pelican-cycling.svg。",
+        "en": "One-shot by claude-opus-5-5 (max) in Claude Code CLI, unmodified, 46 minutes 1 second. Empty workspace, all skills (including claude.ai-synced and bundled ones), plugins (including built-in ones) and MCP servers/connectors disabled, WebFetch/WebSearch denied, no custom system prompt. The model wrote pelican-bicycle.svg; it was renamed to pelican-cycling.svg per repo convention with no content changes."
+      },
+      "contributor": "HearTFireJ"
+    }
+  }
+}
