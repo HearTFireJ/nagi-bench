@@ -12,6 +12,13 @@
         "en": "One-shot by claude-opus-5-5 (max) in Claude Code CLI, unmodified, 46 minutes 1 second. Empty workspace, all skills (including claude.ai-synced and bundled ones), plugins (including built-in ones) and MCP servers/connectors disabled, WebFetch/WebSearch denied, no custom system prompt. The model wrote pelican-bicycle.svg; it was renamed to pelican-cycling.svg per repo convention with no content changes."
       },
       "contributor": "HearTFireJ"
+    },
+    "skeleton-watch": {
+      "note": {
+        "zh": "在本地通过 Claude Code CLI 以 claude-opus-5-5（max）一次生成，未经修改，耗时 1 小时 30 分 23 秒。空 workspace，关闭全部 skill（含 claude.ai 同步与内置 skill）、插件（含内置插件）与 MCP/连接器，禁用 WebFetch/WebSearch，无自定义系统提示。披露：shell 未断网，模型在运行中用 curl 从 jsDelivr 获取了 three.js 的版本列表及 0.169.0/0.170.0 的源码（three.module.js 与部分 examples/jsm 模块）用于核对 API，未访问其他网站。运行中触发过一次 Claude Code 内置的输出上限自动续写，全程无人工输入。",
+        "en": "One-shot by claude-opus-5-5 (max) in Claude Code CLI, unmodified, 1 hour 30 minutes 23 seconds. Empty workspace, all skills (including claude.ai-synced and bundled ones), plugins (including built-in ones) and MCP servers/connectors disabled, WebFetch/WebSearch denied, no custom system prompt. Disclosure: the shell was not network-isolated; during the run the model used curl to fetch the three.js version list and the 0.169.0/0.170.0 sources (three.module.js and some examples/jsm modules) from jsDelivr to check APIs, and accessed no other sites. Claude Code's built-in output-limit auto-continue fired once; there was no human input during the run."
+      },
+      "contributor": "HearTFireJ"
     }
   }
 }
